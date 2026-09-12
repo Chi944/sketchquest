@@ -1,4 +1,4 @@
-import { ApiFault } from './errors';
+import { ApiFault } from './errors.js';
 
 export const MAX_JSON_BYTES = 32 * 1024;
 export const MAX_IMAGE_BYTES = 1024 * 1024;

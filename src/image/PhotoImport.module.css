@@ -1,11 +1,11 @@
 .root {
-  --ink: #203568;
-  --blue: #284ee8;
-  --line: #d9e2f4;
+  --ink: #2a5e37;
+  --blue: #5bb571;
+  --line: #e1ece4;
   color: var(--ink);
   font-family: 'Nunito Sans', sans-serif;
   width: min(100%, 1000px);
-  background: #fff;
+  background: #fffdf7;
 }
 .root button,
 .root input,
@@ -24,7 +24,7 @@
 .root input:focus-visible,
 .root textarea:focus-visible,
 .root select:focus-visible {
-  outline: 3px solid #7f9fff;
+  outline: 3px solid #a7d7b3;
   outline-offset: 3px;
 }
 .header {
@@ -44,7 +44,7 @@
 .header p {
   margin: 0;
   font-size: 0.94rem;
-  color: #526486;
+  color: #53634f;
 }
 .close {
   border: 1px solid var(--line);
@@ -80,18 +80,18 @@
   justify-content: center;
   text-align: center;
   padding: 24px;
-  border: 1px dashed #b3c5ed;
+  border: 1px dashed #bee2c7;
   border-radius: 12px;
-  background-color: #f8faff;
+  background-color: #fcfcfb;
   background-image:
-    linear-gradient(#e6edfa 1px, transparent 1px),
-    linear-gradient(90deg, #e6edfa 1px, transparent 1px);
+    linear-gradient(#f3f4ec 1px, transparent 1px),
+    linear-gradient(90deg, #f3f4ec 1px, transparent 1px);
   background-size: 23px 23px;
 }
 .sketch {
   width: 105px;
   height: 90px;
-  color: #4769c9;
+  color: #53634f;
   transform: rotate(-5deg);
   margin-bottom: 10px;
 }
@@ -105,11 +105,11 @@
   line-height: 1.5;
   max-width: 370px;
   margin: 0 0 22px;
-  background: #f8faffc9;
+  background: #fcfcfbc9;
 }
 .empty small {
   display: block;
-  color: #607297;
+  color: #53634f;
   font-size: 0.77rem;
   margin-top: 15px;
 }
@@ -132,27 +132,27 @@
 .primary {
   background: var(--blue);
   border: 1px solid var(--blue);
-  color: #fff;
-  box-shadow: 0 2px 0 #1a35a1;
+  color: #fffdf7;
+  box-shadow: 0 2px 0 #3a814c;
 }
 .primary:not(:disabled):hover {
-  background: #183dcc;
+  background: #479d5c;
 }
 .secondary {
-  background: #fff;
+  background: #fffdf7;
   color: var(--ink);
-  border: 1px solid #c9d5ec;
+  border: 1px solid #cde8d4;
 }
 .secondary:not(:disabled):hover {
-  background: #f3f6fd;
+  background: #fafaf6;
 }
 .previewArea {
   --preview-height: 360px;
   box-sizing: border-box;
-  background-color: #f2f5fb;
+  background-color: #f8f9f4;
   background-image:
-    linear-gradient(#e7edf7 1px, transparent 1px),
-    linear-gradient(90deg, #e7edf7 1px, transparent 1px);
+    linear-gradient(#f2f3eb 1px, transparent 1px),
+    linear-gradient(90deg, #f2f3eb 1px, transparent 1px);
   background-size: 20px 20px;
   min-height: 220px;
   height: 390px;
@@ -168,7 +168,7 @@
   max-width: 100%;
   position: relative;
   overflow: hidden;
-  background: #fff;
+  background: #fffdf7;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -182,15 +182,15 @@
   user-select: none;
 }
 .previewLoading {
-  color: #607297;
+  color: #53634f;
   padding: 10px;
   font-size: 0.8rem;
 }
 .cropWindow {
   position: absolute;
-  outline: 2px solid #345eea;
+  outline: 2px solid #64ba7a;
   outline-offset: -2px;
-  box-shadow: 0 0 0 2000px #16254b70;
+  box-shadow: 0 0 0 2000px #1e432770;
   pointer-events: none;
 }
 .grid {
@@ -199,8 +199,8 @@
   display: grid;
 }
 .grid span {
-  border-right: 1px solid #466ee991;
-  border-bottom: 1px solid #466ee991;
+  border-right: 1px solid #70bf8491;
+  border-bottom: 1px solid #70bf8491;
 }
 .photoTools {
   display: flex;
@@ -210,7 +210,7 @@
 }
 .filename {
   font-size: 0.76rem;
-  color: #5a6b8a;
+  color: #53634f;
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -218,7 +218,7 @@
 }
 .photoTools button {
   border: 1px solid var(--line);
-  background: #fff;
+  background: #fffdf7;
   color: var(--ink);
   font-size: 0.75rem;
   padding: 7px 9px;
@@ -228,7 +228,7 @@
 }
 .cropHint {
   font-size: 0.78rem;
-  color: #647493;
+  color: #53634f;
   line-height: 1.5;
   margin: 11px 0 0;
 }
@@ -251,7 +251,7 @@
 .adjustments fieldset p {
   font-size: 0.77rem;
   margin: 0 0 12px;
-  color: #647493;
+  color: #53634f;
   line-height: 1.45;
 }
 .sliderLabel {
@@ -265,7 +265,7 @@
   font-size: 0.74rem;
 }
 .sliderLabel output {
-  color: #647493;
+  color: #53634f;
   font-variant-numeric: tabular-nums;
 }
 .sliderLabel input {
@@ -305,19 +305,19 @@
 }
 .gridDimensions > span {
   padding-bottom: 9px;
-  color: #7b8aa5;
+  color: #53634f;
 }
 .gridDimensions label {
   flex: 1;
-  color: #647493;
+  color: #53634f;
   font-size: 0.74rem;
 }
 .gridDimensions select {
   display: block;
   width: 100%;
-  background: #fff;
+  background: #fffdf7;
   color: var(--ink);
-  border: 1px solid #c9d5ec;
+  border: 1px solid #cde8d4;
   border-radius: 6px;
   margin-top: 4px;
   padding: 7px 9px;
@@ -330,12 +330,12 @@
 .legendLabel > span {
   display: block;
   font-size: 0.74rem;
-  color: #647493;
+  color: #53634f;
   font-weight: 400;
   margin: 2px 0 6px;
 }
 .legendLabel textarea {
-  border: 1px solid #c9d5ec;
+  border: 1px solid #cde8d4;
   border-radius: 7px;
   color: var(--ink);
   width: 100%;
@@ -347,7 +347,7 @@
   font-weight: 400;
 }
 .legendLabel textarea::placeholder {
-  color: #7988a3;
+  color: #53634f;
 }
 .legendLabel small {
   display: block;
@@ -355,14 +355,14 @@
   margin-top: 2px;
   font-weight: 400;
   font-size: 0.67rem;
-  color: #7888a5;
+  color: #53634f;
 }
 .feedback {
   padding: 0 28px;
 }
 .status {
   font-size: 0.81rem;
-  color: #4b608c;
+  color: #53634f;
   margin: 9px 0;
   min-height: 1em;
 }
@@ -370,9 +370,9 @@
   min-height: 0;
 }
 .error {
-  background: #fff0ed;
-  border: 1px solid #e1b5aa;
-  color: #853524;
+  background: #f8f8f4;
+  border: 1px solid #dbceb0;
+  color: #705a24;
   padding: 11px 13px;
   border-radius: 7px;
   font-size: 0.85rem;
@@ -380,9 +380,9 @@
   margin: 15px 0 0;
 }
 .unavailable {
-  background: #fff8dc;
-  border: 1px solid #ead69d;
-  color: #735616;
+  background: #f1f2e9;
+  border: 1px solid #dacdad;
+  color: #5f4f2a;
   margin: 0 28px 18px;
   padding: 13px 15px;
   border-radius: 7px;
@@ -411,7 +411,7 @@
 }
 .privacy {
   max-width: 440px;
-  color: #62728e;
+  color: #53634f;
   font-size: 0.7rem;
   line-height: 1.5;
   margin: 0;
@@ -503,7 +503,7 @@
   letter-spacing: -0.035em;
 }
 .root {
-  --blue: #315ed4;
+  --blue: #53b26b;
 }
 .header {
   padding: 10px 0 20px;
@@ -527,21 +527,21 @@
   min-height: 44px;
 }
 .error {
-  border: 1px solid #e1b5aa;
+  border: 1px solid #dbceb0;
   border-radius: 7px;
 }
 .legendLabel textarea::placeholder {
-  color: #5c6e8c;
+  color: #53634f;
 }
 .legendLabel small {
-  color: #5c6e8c;
+  color: #53634f;
   font-size: 0.75rem;
 }
 .privacy {
   font-size: 0.75rem;
 }
 .gridDimensions > span {
-  color: #5c6e8c;
+  color: #53634f;
 }
 @media (max-width: 420px) {
   .header {
@@ -586,4 +586,52 @@
     height: 240px;
     --preview-height: 210px;
   }
+}
+.root {
+  --ink: #293d33;
+  --blue: #245b48;
+  --line: #d8ddcd;
+  background: #fffdf7;
+}
+.header h2 {
+  font-family: var(--display);
+  font-weight: 500;
+}
+.empty {
+  background-color: #f4f6e9;
+  background-image:
+    linear-gradient(#e2e6d5 1px, transparent 1px),
+    linear-gradient(90deg, #e2e6d5 1px, transparent 1px);
+  border-color: #b9c6a4;
+}
+.empty p {
+  background: #f4f6e9c9;
+}
+.previewArea {
+  background-color: #eff2e3;
+  background-image:
+    linear-gradient(#e0e6cf 1px, transparent 1px),
+    linear-gradient(90deg, #e0e6cf 1px, transparent 1px);
+}
+.primary {
+  color: #fff8e9;
+  background: #2a5941;
+  border-color: #214b35;
+  box-shadow: 0 2px 0 #193c2b;
+}
+.primary:not(:disabled):hover {
+  background: #1e4933;
+}
+.secondary {
+  background: #fffdf7;
+}
+.secondary:not(:disabled):hover {
+  background: #eaf0df;
+}
+.legendLabel textarea,
+.gridDimensions select {
+  background: #fffdf8;
+}
+.legendLabel textarea::placeholder {
+  color: #53634f;
 }

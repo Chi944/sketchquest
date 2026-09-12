@@ -2,11 +2,13 @@
 
 **Draw a puzzle. Play it. Change it with words. Check the proof.**
 
-SketchQuest is an original grid-puzzle workbench with a manual editor, a deterministic shortest-path solver, photo interpretation, structured natural-language proposals, and immutable sharing. All deployed services are designed for Cloudflare's **Free** plan. No paid model fallback, payment feature, or prepaid gateway is configured.
+[Open SketchQuest](https://sketchquest-beige.vercel.app) · [Play a shared puzzle](https://sketchquest-beige.vercel.app/s/dRbY-OklZBbbxwXPocXcAg)
 
-![SketchQuest playable desktop interface](docs/design/desktop-play.png)
+SketchQuest is an original grid-puzzle workbench with a manual editor, a deterministic shortest-path solver, photo preparation, structured change review, and immutable sharing. The production target is **Vercel Hobby**, with a dedicated private Blob store for shared puzzles. The original Cloudflare Free adapter remains available. No paid model fallback, payment feature, or prepaid gateway is configured. Live photo interpretation and free-text generation are currently disabled; the prepared remix is clearly labeled.
 
-The interface was refined using Impeccable and Design with Intent. [Generated page/section reference and implementation evidence](docs/design/verification.md) include desktop and mobile captures, the original generation prompt, and accessibility findings. Verification: 87 unit/integration tests and 19 Chromium browser tests pass; live model evaluation remains unrun.
+![SketchQuest playable desktop interface](docs/design/photoreal-desktop-play.png)
+
+The interface was refined using Impeccable and Design with Intent, then rebuilt around generated photorealistic scenery and an explorer character. [Artwork, exact prompts, and desktop/mobile captures](docs/design/photoreal-generation.md) record the actual production assets. Verification: 98 unit/integration tests and 19 Chromium browser tests pass; live model evaluation remains unrun.
 
 ## Run locally
 
@@ -69,9 +71,18 @@ npm run test:e2e
 
 Tests that simulate model responses label them as mocks and never call the real model. The extraction evaluator does not generate missing predictions or treat unavailable metrics as zero.
 
-## Live AI and free deployment
+## Vercel deployment
 
-Production has not been provisioned by this checkout. A real account and D1 database are required.
+The dedicated Vercel project and private Singapore Blob store run on the verified Hobby plan. Browser play, editing, solving, replay, local revisions, and immutable shared URLs are available. AI endpoints report their unavailable state without calling another provider. See [Vercel setup, limits, and production verification](docs/vercel-deployment.md).
+
+```sh
+npm run build:vercel
+vercel deploy --prod --yes --scope chi944s-projects
+```
+
+## Optional Cloudflare AI deployment
+
+The Cloudflare adapter is separate from the Vercel deployment. A dedicated free account and D1 database are required before enabling it.
 
 1. Use a dedicated **Workers Free** account. Verify its plan in the Cloudflare dashboard. Do not attach prepaid AI Gateway credits or upgrade the account. An app setting alone cannot prove the account's billing plan.
 2. Authenticate Wrangler locally with `npx wrangler login`.
@@ -92,9 +103,10 @@ flowchart LR
     UI --> Rules[Pure TypeScript transition function]
     UI <--> Solver[Browser Web Worker: BFS]
     Solver --> Rules
-    UI <--> API[Hono / Cloudflare Worker]
-    API --> AI[Workers AI: Llama vision + JSON]
-    API <--> D1[D1 immutable snapshots + quotas]
+    UI <--> API[Hono API]
+    API <--> Vercel[Vercel Node function + private Blob snapshots]
+    API <--> Cloudflare[Optional Cloudflare Worker + D1]
+    Cloudflare --> AI[Optional Workers AI: Llama vision + JSON]
 ```
 
 - `src/core` owns board validation, terrain/occupant rules, editing operations, and examples. It has no React, provider, or database dependencies.
@@ -125,4 +137,4 @@ Shortest-move length is a difficulty proxy, not a prediction of human difficulty
 
 ## Credits
 
-The playable interface uses original procedural SVG puzzle graphics and no borrowed game assets. User-requested generated page/section mockups are kept separately as design references in `docs/design`; they are not gameplay assets. Built with Llama; see [third-party notices](THIRD_PARTY_NOTICES.md). Application source is MIT licensed.
+The playable interface uses generated photorealistic game pieces and forest scenery, with self-hosted Fraunces and Nunito Sans typography. Original images and exact prompts are preserved in `docs/design`; no borrowed game assets are used. The optional Cloudflare inference adapter is built with Llama; see [third-party notices](THIRD_PARTY_NOTICES.md). Application source is MIT licensed.

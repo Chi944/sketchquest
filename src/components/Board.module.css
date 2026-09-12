@@ -10,7 +10,7 @@
   text-align: center;
   font-size: 12px;
   font-weight: 800;
-  color: #5f6c7d;
+  color: #53634f;
   padding: 0 0 9px;
 }
 .board {
@@ -18,10 +18,10 @@
   grid-template-columns: repeat(var(--columns), 1fr);
   grid-template-rows: repeat(var(--rows), 1fr);
   aspect-ratio: var(--columns) / var(--rows);
-  border: 2px solid #bac9db;
+  border: 2px solid #badbc2;
   border-radius: 5px;
-  box-shadow: 0 3px 0 #cbd7e5;
-  background: #edf3f9;
+  box-shadow: 0 3px 0 #cbe5d2;
+  background: #f6f6f0;
   gap: 2px;
   padding: 3px;
   transition: border-color 0.2s;
@@ -32,19 +32,19 @@
   place-items: center;
   min-width: 0;
   padding: 0;
-  background: #fff;
+  background: #fffdf7;
   border: 0;
   border-radius: 2px;
   aspect-ratio: 1;
-  color: #536c89;
+  color: #53634f;
   cursor: pointer;
   isolation: isolate;
 }
 .cell:hover {
-  background: #edf3ff;
+  background: #f8f8f4;
 }
 .cell:focus-visible {
-  outline: 3px solid #315ed4;
+  outline: 3px solid #53b26b;
   outline-offset: -3px;
   z-index: 4;
 }
@@ -64,35 +64,35 @@
   animation: arrive 0.13s ease-out;
 }
 .wallCell {
-  background: #eef2f7;
+  background: #f5f6ef;
 }
 .changed {
-  outline: 3px solid #b693dd;
+  outline: 3px solid #d3c39d;
   outline-offset: -3px;
-  background: #f4eaff;
+  background: #f7f7f2;
 }
 .uncertain {
-  background: #fff6d9;
-  outline: 2px dashed #a87920;
+  background: #f0f1e7;
+  outline: 2px dashed #8a733e;
   outline-offset: -3px;
 }
 .selected {
-  outline: 3px solid #315ed4;
+  outline: 3px solid #53b26b;
   outline-offset: -3px;
-  background: #e1ebff;
+  background: #f3f4ec;
 }
 .question {
   position: absolute;
   right: 3px;
   top: 2px;
-  background: #fff4bf;
+  background: #ebe4d3;
   border-radius: 50%;
   width: 15px;
   height: 15px;
   line-height: 15px;
   font-size: 12px;
   font-weight: 900;
-  color: #8b5e00;
+  color: #60502b;
   z-index: 4;
 }
 .covered {
@@ -101,7 +101,7 @@
   height: 20px;
   right: 0;
   bottom: 0;
-  background: #fff;
+  background: #fffdf7;
   border-radius: 50%;
   z-index: 3;
 }
@@ -112,13 +112,13 @@
   transform: translateY(-50%);
   font-size: 12px;
   font-weight: 800;
-  color: #5f6c7d;
+  color: #53634f;
 }
 .won {
-  border-color: #52a48b;
+  border-color: #52a452;
   box-shadow:
-    0 0 0 5px #daefe5,
-    0 4px 0 #aad6c4;
+    0 0 0 5px #dfeadf,
+    0 4px 0 #aad6aa;
 }
 .miniature {
   max-width: 160px;
@@ -191,9 +191,120 @@
   height: 15px;
   line-height: 15px;
   text-align: center;
-  background: #fff;
-  color: #76519c;
+  background: #fffdf7;
+  color: #705a24;
   border-radius: 3px;
   font-size: 10px;
   z-index: 4;
+}
+
+/* Physical miniature tiles, with state markers above the photographic pieces. */
+.board {
+  border: 5px solid #7b8065;
+  border-radius: 8px;
+  background: #c4cbb2;
+  padding: 5px;
+  gap: 3px;
+  box-shadow:
+    0 5px 0 #61694e,
+    0 11px 22px #3c4b2628,
+    inset 0 1px 0 #edf1dc;
+}
+.cell {
+  background: linear-gradient(135deg, #f2f1df, #e6e9d4);
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 #fffff580;
+  color: #53634f;
+}
+.cell:hover {
+  background: #f6f3d8;
+}
+.wallCell {
+  background: #d6dcc5;
+}
+.terrain {
+  inset: 1px;
+}
+.occupant {
+  inset: 0;
+  z-index: 2;
+}
+.covered {
+  width: 24px;
+  height: 24px;
+  background: #fffdf4;
+  border: 1px solid #c9ceb7;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+}
+.changed {
+  outline: 3px solid #b78535;
+  outline-offset: -3px;
+  background: #f5e6bd;
+}
+.selected {
+  outline: 3px solid #226d52;
+  outline-offset: -3px;
+  background: #d6e7c4;
+}
+.uncertain {
+  outline: 3px dashed #ad7c22;
+  outline-offset: -3px;
+  background: #fff1c9;
+}
+.changeMarker {
+  color: #795820;
+  background: #fff4d9;
+  z-index: 5;
+}
+.question {
+  z-index: 5;
+  color: #7a5417;
+  background: #fff1b9;
+}
+.cell:focus-visible {
+  outline: 3px solid #184e3a;
+  outline-offset: -3px;
+  z-index: 6;
+}
+.columnLabels,
+.rowLabel {
+  color: #53634f;
+}
+.won {
+  border-color: #548046;
+  box-shadow:
+    0 5px 0 #3c652f,
+    0 10px 24px #46662b35;
+}
+.miniature .board {
+  border-width: 2px;
+  padding: 2px;
+  gap: 1px;
+}
+.miniature .cell {
+  box-shadow: none;
+}
+.miniature .terrain {
+  inset: 0;
+}
+.miniature .covered {
+  width: 10px;
+  height: 10px;
+}
+@media (max-width: 480px) {
+  .board {
+    border-width: 4px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .terrain,
+  .occupant {
+    inset: 0;
+  }
+  .covered {
+    width: 17px;
+    height: 17px;
+  }
 }

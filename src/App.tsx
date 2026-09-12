@@ -1082,32 +1082,28 @@ export default function App() {
       <main className={s.main}>
         {!sharedView ? (
           <section className={s.intro}>
-            <div>
+            <img
+              className={s.heroImage}
+              src="/art/expedition-hero.webp"
+              alt=""
+              aria-hidden="true"
+              fetchPriority="high"
+            />
+            <div className={s.heroContent}>
               <h1>
                 Little drawings.
-                <br className={s.mobileBreak} />{' '}
-                <span>
-                  Big adventures.
-                  <svg viewBox="0 0 310 13" preserveAspectRatio="none" aria-hidden="true">
-                    <path
-                      d="M3 9Q120 0 304 6M16 12Q155 5 291 10"
-                      fill="none"
-                      stroke="#efc84d"
-                      strokeWidth="4"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
+                <br />
+                <span>Big adventures.</span>
               </h1>
               <p>Draw a puzzle. Find your way out. Then ask “what if?”</p>
+              <button className={s.uploadButton} onClick={() => setModal('photo')}>
+                <Camera size={21} />
+                <span>
+                  Start with a sketch<small>Upload or take a photo</small>
+                </span>
+                <ArrowUp className={s.uploadArrow} size={18} />
+              </button>
             </div>
-            <button className={s.uploadButton} onClick={() => setModal('photo')}>
-              <Camera size={21} />
-              <span>
-                Start with a sketch<small>Upload or take a photo</small>
-              </span>
-              <ArrowUp className={s.uploadArrow} size={18} />
-            </button>
           </section>
         ) : (
           <section className={s.sharedIntro}>
@@ -1427,7 +1423,7 @@ export default function App() {
                     <div>
                       <h3>Your little quest</h3>
                       <p>
-                        Reach the green exit. Pick up the key to unlock the door. Crates can be
+                        Reach the open arch. Pick up the key to unlock the door. Crates can be
                         pushed, one at a time.
                       </p>
                     </div>

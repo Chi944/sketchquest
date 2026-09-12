@@ -27,4 +27,6 @@ Run `npm run test:e2e` to reproduce the complete suite, or `npm run test:e2e -- 
 
 ## Limits
 
+The photorealistic redesign was rechecked on 13 September 2026: all 19 browser tests passed in 41.0 seconds, including the same seven axe states with zero detected violations. The warm palette initially reduced contrast in secondary labels; those labels were darkened before the final run. Generated photographic sprites preserve cell names, focus outlines, and non-color proposal/uncertainty markers.
+
 Axe includes checks requiring manual review in its report; an empty violations list is not a complete accessibility assessment. This suite does not validate screen-reader announcements, all possible boards, OS camera permissions, native HEIC handling, or every browser and assistive-technology combination. Keyboard focus in Chromium may pass through browser chrome between native-dialog cycles; the test checks that background page controls do not receive focus.

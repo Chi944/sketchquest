@@ -2,6 +2,8 @@
 
 The Hono Worker serves same-origin `/api/*` routes. Browser assets and the puzzle engine work without AI. Local D1 sharing works after `npm run db:migrate`. No provider call is made by default: `wrangler.jsonc` has no AI binding and `FREE_PLAN_CONFIRMED` is `false`.
 
+The separate [Vercel deployment](vercel-deployment.md) serves the same public snapshot contract using a Node function and private Blob storage, with lower persistent sharing quotas. Live AI stays disabled there. The Cloudflare configuration and quota details below apply to the original Worker deployment.
+
 ## Local operation
 
 1. Install dependencies, run `npm run db:migrate`, then `npm run dev`.

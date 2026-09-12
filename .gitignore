@@ -11,3 +11,6 @@ playwright-report/
 .DS_Store
 eval/private/
 artifacts/
+
+.vercel
+.env*.local

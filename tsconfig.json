@@ -15,5 +15,5 @@
     "noEmit": true,
     "types": ["node", "vite/client", "@cloudflare/workers-types"]
   },
-  "include": ["src", "worker", "scripts", "eval", "e2e", "*.config.ts"]
+  "include": ["src", "worker", "api", "scripts", "eval", "e2e", "*.config.ts"]
 }

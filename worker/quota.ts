@@ -1,8 +1,8 @@
 import type { Context } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
 import type { Env } from './env';
-import { isLocal, quotaSecret } from './env';
-import { ApiFault, nextUtcDaySeconds } from './errors';
+import { isLocal, quotaSecret } from './env.js';
+import { ApiFault, nextUtcDaySeconds } from './errors.js';
 
 type Kind = 'ai' | 'share';
 type AppContext = Context<{ Bindings: Env }>;

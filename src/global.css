@@ -1,13 +1,20 @@
 :root {
   font-family: 'Nunito Sans', sans-serif;
-  color: #253955;
-  background: #f3f7fc;
+  font-weight: 400;
+  color: #293d33;
+  background: #f2f1e9;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-weight: 400;
   color-scheme: light;
+  --ink: #293d33;
+  --muted: #616d63;
+  --accent: #245b48;
+  --paper: #fffdf8;
+  --canvas: #f2f1e9;
+  --line: #d8ddcd;
+  --display: 'Fraunces', Georgia, serif;
 }
 * {
   box-sizing: border-box;
@@ -15,6 +22,8 @@
 body {
   margin: 0;
   min-width: 320px;
+  caret-color: var(--accent);
+  scrollbar-color: #a6b3a3 #eeefe5;
 }
 button,
 input,
@@ -31,10 +40,11 @@ select {
 }
 button {
   cursor: pointer;
+  color: inherit;
 }
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  opacity: 0.48;
 }
 button,
 a {
@@ -43,6 +53,7 @@ a {
 a {
   color: inherit;
   text-decoration: none;
+  text-underline-offset: 3px;
 }
 button:focus-visible,
 a:focus-visible,
@@ -50,7 +61,7 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 summary:focus-visible {
-  outline: 3px solid #87a8ef;
+  outline: 3px solid #24755b;
   outline-offset: 3px;
 }
 h1,
@@ -59,11 +70,9 @@ h3,
 p {
   margin: 0;
 }
-button {
-  color: inherit;
-}
 ::selection {
-  background: #dce8ff;
+  background: #e3c58f;
+  color: #20372d;
 }
 button svg {
   flex-shrink: 0;
@@ -71,10 +80,11 @@ button svg {
 input,
 textarea {
   min-width: 0;
+  caret-color: var(--accent);
 }
 dialog::backdrop {
-  background: #1b2f4f88;
-  backdrop-filter: blur(5px);
+  background: #142a228c;
+  backdrop-filter: blur(4px);
 }
 .sr-only {
   position: absolute;
@@ -92,11 +102,11 @@ kbd {
     700 10px 'Nunito Sans',
     sans-serif;
   padding: 2px 4px;
-  border: 1px solid #d4ddea;
+  border: 1px solid #c5cdbd;
   border-bottom-width: 2px;
-  background: #fff;
+  background: #fffdf7;
   border-radius: 4px;
-  color: #506782;
+  color: #4b614f;
 }
 summary {
   cursor: pointer;
@@ -110,27 +120,4 @@ summary {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
-
-:root {
-  --ink: #253955;
-  --muted: #586d88;
-  --accent: #315ed4;
-  --paper: #fff;
-  --canvas: #f3f7fc;
-  --line: #d6e1ed;
-}
-body {
-  caret-color: var(--accent);
-  scrollbar-color: #97abc8 #edf3fa;
-}
-a {
-  text-underline-offset: 3px;
-}
-input,
-textarea {
-  caret-color: var(--accent);
-}
-button:disabled {
-  opacity: 0.55;
 }

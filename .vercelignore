@@ -1,0 +1,14 @@
+node_modules
+.git
+.vercel
+.wrangler
+dist
+.env*
+.dev.vars*
+**/.dev.vars*
+**/.env*
+artifacts
+test-results
+playwright-report
+docs/design
+eval/synthetic

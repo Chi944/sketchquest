@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { boardFromAscii, validateBoard } from '../core/board';
-import { EXPEDITIONS } from '../core/examples';
+import { CLASSIC_EXPEDITIONS as EXPEDITIONS } from '../core/examples';
 import { collectedRelicCount, relicCells, replay } from '../core/rules';
 import { encodeState, solve } from './search';
 

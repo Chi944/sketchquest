@@ -8,13 +8,22 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from 'react';
-import type { BoardDefinition, GameState } from '../core/types';
+import type { BoardDefinition, Direction, GameState } from '../core/types';
 import { isRelicCollected } from '../core/rules';
-import { Box, Grid2X2 } from 'lucide-react';
+import { Box, Eye, Grid2X2 } from 'lucide-react';
 import { Piece } from './Piece';
 import styles from './Board.module.css';
 
 const BoardScene = lazy(() => import('./BoardScene'));
+export type BoardView = 'first-person' | 'overview' | '2d';
+export function readBoardView(): BoardView {
+  try {
+    const value = localStorage.getItem('sketchquest-view');
+    return value === '2d' || value === 'overview' ? value : 'first-person';
+  } catch {
+    return 'first-person';
+  }
+}
 class SceneBoundary extends Component<
   { children: ReactNode; onUnavailable: () => void },
   { failed: boolean }
@@ -44,6 +53,11 @@ interface Props {
   miniature?: boolean;
   label?: string;
   theme?: 'forest' | 'coast' | 'frost';
+  view?: BoardView;
+  onViewChange?: (view: BoardView) => void;
+  facing?: Direction;
+  motionCue?: { id: number; kind: 'blocked' | 'turn' };
+  overlay?: ReactNode;
 }
 
 export function Board({
@@ -59,25 +73,30 @@ export function Board({
   miniature,
   label = 'Puzzle board',
   theme = 'forest',
+  view: controlledView,
+  onViewChange,
+  facing,
+  motionCue,
+  overlay,
 }: Props) {
   const buttons = useRef<Array<HTMLButtonElement | null>>([]);
   const [focusedCell, setFocusedCell] = useState(0);
-  const [view, setView] = useState<'3d' | '2d'>(() => {
-    try {
-      return localStorage.getItem('sketchquest-view') === '2d' ? '2d' : '3d';
-    } catch {
-      return '3d';
-    }
-  });
+  const [localView, setView] = useState<BoardView>(readBoardView);
+  const view = controlledView ?? localView;
   const [unavailable, setUnavailable] = useState(false);
-  const threeDimensional = !miniature && !editable && view === '3d' && !unavailable;
-  function changeView(value: '3d' | '2d') {
+  const threeDimensional = !miniature && !editable && view !== '2d' && !unavailable;
+  function changeView(value: BoardView) {
     setView(value);
+    onViewChange?.(value);
     try {
       localStorage.setItem('sketchquest-view', value);
     } catch {
       /* View still works without storage. */
     }
+  }
+  function fallback() {
+    setUnavailable(true);
+    onViewChange?.('2d');
   }
   const player = state?.player ?? board.player;
   const crates = state?.crates ?? board.crates;
@@ -109,7 +128,9 @@ export function Board({
         <div className={styles.viewBar}>
           <span>
             {threeDimensional
-              ? 'Explore in 3D'
+              ? view === 'first-person'
+                ? 'Step inside your adventure'
+                : 'Plan your next step'
               : unavailable
                 ? 'Grid view · 3D unavailable'
                 : 'Your puzzle, from above'}
@@ -117,13 +138,23 @@ export function Board({
           <div role="group" aria-label="Board view">
             <button
               type="button"
-              aria-label="3D world view"
-              aria-pressed={threeDimensional}
+              aria-label="First-person view"
+              aria-pressed={threeDimensional && view === 'first-person'}
               disabled={unavailable}
-              onClick={() => changeView('3d')}
+              onClick={() => changeView('first-person')}
+            >
+              <Eye size={14} />
+              Explore
+            </button>
+            <button
+              type="button"
+              aria-label="3D world view"
+              aria-pressed={threeDimensional && view === 'overview'}
+              disabled={unavailable}
+              onClick={() => changeView('overview')}
             >
               <Box size={14} />
-              3D world
+              Map
             </button>
             <button
               type="button"
@@ -138,23 +169,29 @@ export function Board({
         </div>
       )}
       {threeDimensional && (
-        <SceneBoundary onUnavailable={() => setUnavailable(true)}>
-          <Suspense
-            fallback={
-              <div className={styles.sceneLoading} role="status">
-                Opening your little world…
-              </div>
-            }
-          >
-            <BoardScene
-              board={board}
-              state={state}
-              won={won}
-              theme={theme}
-              onUnavailable={() => setUnavailable(true)}
-            />
-          </Suspense>
-        </SceneBoundary>
+        <div className={styles.sceneFrame}>
+          <SceneBoundary onUnavailable={fallback}>
+            <Suspense
+              fallback={
+                <div className={styles.sceneLoading} role="status">
+                  Opening your little world…
+                </div>
+              }
+            >
+              <BoardScene
+                board={board}
+                state={state}
+                won={won}
+                theme={theme}
+                perspective={view === 'overview' ? 'overview' : 'first-person'}
+                facing={facing}
+                motionCue={motionCue}
+                onUnavailable={fallback}
+              />
+            </Suspense>
+          </SceneBoundary>
+          {view === 'first-person' && overlay}
+        </div>
       )}
       <div className={threeDimensional ? styles.semanticGrid : undefined}>
         {!miniature && (
@@ -182,12 +219,15 @@ export function Board({
                   ? 'crate'
                   : null;
             const collected =
-              (terrain === 'key' && state?.hasKey) ||
+              (terrain === 'key' && (state?.hasKey || state?.doorOpened)) ||
+              (terrain === 'boots' && state?.hasBoots) ||
               (terrain === 'relic' && state && isRelicCollected(board, state, cell));
             const names = [
               `${String.fromCharCode(65 + (cell % board.width))}${Math.floor(cell / board.width) + 1}`,
               collected ? `floor, ${terrain} collected` : terrain,
-              occupant,
+              occupant === 'player' && state?.dead
+                ? `player, fallen in ${state.deathCause}`
+                : occupant,
             ]
               .filter(Boolean)
               .join(', ');
@@ -199,7 +239,10 @@ export function Board({
                   aria-hidden="true"
                 >
                   <span className={styles.terrain}>
-                    <Piece kind={collected ? 'floor' : terrain} unlocked={state?.hasKey} />
+                    <Piece
+                      kind={collected ? 'floor' : terrain}
+                      unlocked={board.rulesVersion === 3 ? state?.doorOpened : state?.hasKey}
+                    />
                   </span>
                   {occupant && (
                     <span className={styles.occupant}>
@@ -215,7 +258,7 @@ export function Board({
                   buttons.current[cell] = el;
                 }}
                 type="button"
-                className={`${styles.cell} ${terrain === 'wall' ? styles.wallCell : ''} ${styles[terrain] ?? ''} ${changes.includes(cell) ? styles.changed : ''} ${uncertain.includes(cell) ? styles.uncertain : ''} ${selected.includes(cell) ? styles.selected : ''}`}
+                className={`${styles.cell} ${terrain === 'wall' ? styles.wallCell : ''} ${styles[terrain] ?? ''} ${changes.includes(cell) ? styles.changed : ''} ${uncertain.includes(cell) ? styles.uncertain : ''} ${selected.includes(cell) ? styles.selected : ''} ${occupant === 'player' && state?.dead ? styles.fallen : ''}`}
                 aria-label={`${names}${changes.includes(cell) ? ', changed' : ''}${uncertain.includes(cell) ? ', needs review' : ''}`}
                 tabIndex={
                   !threeDimensional && cell === Math.min(focusedCell, board.terrain.length - 1)
@@ -227,7 +270,10 @@ export function Board({
                 onKeyDown={(e) => navigate(e, cell)}
               >
                 <span className={styles.terrain}>
-                  <Piece kind={collected ? 'floor' : terrain} unlocked={state?.hasKey} />
+                  <Piece
+                    kind={collected ? 'floor' : terrain}
+                    unlocked={board.rulesVersion === 3 ? state?.doorOpened : state?.hasKey}
+                  />
                 </span>
                 {occupant && (
                   <span className={styles.occupant}>

@@ -1,6 +1,7 @@
 import {
   TERRAINS,
   LEGACY_TERRAINS,
+  EXPEDITION_TERRAINS,
   type BoardDefinition,
   type CellEdit,
   type RuleIssue,
@@ -23,7 +24,7 @@ export function validateBoard(input: unknown): RuleIssue[] {
   if (!isRecord(input))
     return [{ code: 'board_type', message: 'The board must be an object.', cells: [] }];
   if (input.schemaVersion !== 1) add('schema_version', 'This board format is not supported.');
-  if (input.rulesVersion !== 1 && input.rulesVersion !== 2)
+  if (input.rulesVersion !== 1 && input.rulesVersion !== 2 && input.rulesVersion !== 3)
     add('rules_version', 'This rules version is not supported.');
   if (!validSize(input.width) || !validSize(input.height))
     add('dimensions', 'Boards must be between 4 × 4 and 8 × 8.');
@@ -38,7 +39,8 @@ export function validateBoard(input: unknown): RuleIssue[] {
     Array.from(input.terrain).forEach((value, index) => {
       if (
         !isTerrain(value) ||
-        (input.rulesVersion === 1 && !(LEGACY_TERRAINS as readonly unknown[]).includes(value))
+        (input.rulesVersion === 1 && !(LEGACY_TERRAINS as readonly unknown[]).includes(value)) ||
+        (input.rulesVersion === 2 && !(EXPEDITION_TERRAINS as readonly unknown[]).includes(value))
       )
         bad.push(index);
     });
@@ -54,6 +56,9 @@ export function validateBoard(input: unknown): RuleIssue[] {
     const keys = cellsFor('key');
     const doors = cellsFor('door');
     const relics = cellsFor('relic');
+    const boots = cellsFor('boots');
+    if (boots.length > 1)
+      add('boots_count', 'A board can have at most one pair of protective boots.', boots);
     if (relics.length > 4)
       add('relic_count', 'An expedition can have at most four relics.', relics);
     if (exits.length !== 1) add('exit_count', 'A board needs exactly one exit.', exits);
@@ -66,10 +71,10 @@ export function validateBoard(input: unknown): RuleIssue[] {
   if (!Array.isArray(input.crates)) {
     add('crates_type', 'Crates must be an array of cell positions.');
   } else {
-    if (input.crates.length > (input.rulesVersion === 2 ? 3 : 2))
+    if (input.crates.length > (input.rulesVersion === 1 ? 2 : 3))
       add(
         'crate_count',
-        input.rulesVersion === 2
+        input.rulesVersion !== 1
           ? 'An expedition can have at most three crates.'
           : 'A board can have at most two crates.',
         input.crates.filter(inBounds),
@@ -95,12 +100,16 @@ export function validateBoard(input: unknown): RuleIssue[] {
       inBounds,
     );
     const blocked = occupants.filter(
-      (cell) => terrain[cell] === 'wall' || terrain[cell] === 'door' || terrain[cell] === 'water',
+      (cell) =>
+        terrain[cell] === 'wall' ||
+        terrain[cell] === 'door' ||
+        terrain[cell] === 'water' ||
+        terrain[cell] === 'spikes',
     );
     if (blocked.length)
       add(
         'blocked_start',
-        'Players and crates cannot start on walls, water, or locked doors.',
+        'Players and crates cannot start on walls, water, spikes, or locked doors.',
         blocked,
       );
   }
@@ -152,7 +161,10 @@ export function emptyBoard(width = 6, height = 6): BoardDefinition {
   };
 }
 
-export function boardFromAscii(rows: string[]): BoardDefinition {
+export function boardFromAscii(
+  rows: string[],
+  rulesVersion?: BoardDefinition['rulesVersion'],
+): BoardDefinition {
   if (
     !rows.length ||
     !validSize(rows.length) ||
@@ -162,7 +174,9 @@ export function boardFromAscii(rows: string[]): BoardDefinition {
     throw new Error('ASCII boards must be rectangular and between 4 × 4 and 8 × 8.');
   const board: BoardDefinition = {
     schemaVersion: 1,
-    rulesVersion: rows.some((row) => /[~BIR]/.test(row)) ? 2 : 1,
+    rulesVersion:
+      rulesVersion ??
+      (rows.some((row) => /[SF]/.test(row)) ? 3 : rows.some((row) => /[~BIR]/.test(row)) ? 2 : 1),
     width: rows[0].length,
     height: rows.length,
     terrain: [],
@@ -181,6 +195,8 @@ export function boardFromAscii(rows: string[]): BoardDefinition {
     B: 'bridge',
     I: 'ice',
     R: 'relic',
+    S: 'spikes',
+    F: 'boots',
   };
   [...rows.join('')].forEach((glyph, cell) => {
     if (!(glyph in glyphs))
@@ -223,7 +239,12 @@ export function applyCellEdits(board: BoardDefinition, edits: CellEdit[]): Board
   };
   for (const edit of edits) {
     result.terrain[edit.cell] = edit.terrain;
-    if (!(LEGACY_TERRAINS as readonly string[]).includes(edit.terrain)) result.rulesVersion = 2;
+    if (edit.terrain === 'spikes' || edit.terrain === 'boots') result.rulesVersion = 3;
+    else if (
+      result.rulesVersion === 1 &&
+      !(LEGACY_TERRAINS as readonly string[]).includes(edit.terrain)
+    )
+      result.rulesVersion = 2;
     if (edit.occupant === 'player') result.player = edit.cell;
     if (edit.occupant === 'crate') result.crates.push(edit.cell);
   }
@@ -252,7 +273,9 @@ export function paintCell(board: BoardDefinition, cell: number, tool: Tool): Boa
   if (!Number.isInteger(cell) || cell < 0 || cell >= board.terrain.length)
     throw new Error('Choose a cell inside the board.');
   const result = { ...board, terrain: [...board.terrain], crates: [...board.crates] };
-  if (['water', 'bridge', 'ice', 'relic'].includes(tool)) result.rulesVersion = 2;
+  if (tool === 'spikes' || tool === 'boots') result.rulesVersion = 3;
+  else if (result.rulesVersion === 1 && ['water', 'bridge', 'ice', 'relic'].includes(tool))
+    result.rulesVersion = 2;
   if (tool === 'erase') {
     if (result.player === cell) result.player = -1;
     else if (result.crates.includes(cell))
@@ -264,7 +287,8 @@ export function paintCell(board: BoardDefinition, cell: number, tool: Tool): Boa
     if (
       result.terrain[cell] === 'wall' ||
       result.terrain[cell] === 'door' ||
-      result.terrain[cell] === 'water'
+      result.terrain[cell] === 'water' ||
+      result.terrain[cell] === 'spikes'
     )
       result.terrain[cell] = 'floor';
     result.crates = result.crates.filter((crate) => crate !== cell);
@@ -274,10 +298,10 @@ export function paintCell(board: BoardDefinition, cell: number, tool: Tool): Boa
       result.crates.push(cell);
     }
   } else {
-    if (tool === 'exit' || tool === 'key' || tool === 'door')
+    if (tool === 'exit' || tool === 'key' || tool === 'door' || tool === 'boots')
       result.terrain = result.terrain.map((terrain) => (terrain === tool ? 'floor' : terrain));
     result.terrain[cell] = tool;
-    if (tool === 'wall' || tool === 'door' || tool === 'water') {
+    if (tool === 'wall' || tool === 'door' || tool === 'water' || tool === 'spikes') {
       result.crates = result.crates.filter((crate) => crate !== cell);
       if (result.player === cell) result.player = -1;
     }

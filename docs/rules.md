@@ -1,4 +1,6 @@
-# SketchQuest rules, versions 1 and 2
+# SketchQuest rules and compatibility
+
+**Current expeditions use [version 3 first-person rules](first-person-rules.md): keys are consumed at gates, boots protect from spikes, and deep water is fatal.** The sections below preserve the exact historical version 1/2 behavior for existing boards and shared links. Camera selection never changes a board’s rules.
 
 Reach the exit by moving one cell up, right, down, or left. There is no diagonal movement, pulling, or pushing of multiple crates. Moves are counted equally; a push is also a move and additionally increments the push counter.
 
@@ -74,9 +76,9 @@ The version 1 maximum loose state count for 64 cells and two crates is `64 × C(
 
 Each job carries its own job ID, revision ID, and canonical board identity. Results from an earlier revision or cancelled job must not update a newer board. A replay being syntactically valid is insufficient for verification: it must also reach the exit. To claim that an edit made the shortest solution longer, both original and proposed **initial boards** must have solved shortest paths and the proposed length must be strictly larger.
 
-## Prepared expeditions
+## Historical version 2 expeditions
 
-Six local examples provide new routes without requiring live AI. The source metadata is exported separately as `EXPEDITIONS` so original `EXAMPLES` indices remain stable. Their shortest directional-input counts are checked in tests, and every returned path is replayed to confirm that all relics were collected and the exit reached.
+These earlier layouts remain in `CLASSIC_EXPEDITIONS` for compatibility tests and shared snapshots. Current version 3 layouts are in `EXPEDITIONS`; original `EXAMPLES` indices remain stable. Shortest input counts and full winning replays are checked in tests.
 
 | Theme  | Expedition       | Grid  | Shortest inputs | Features                                                                 |
 | ------ | ---------------- | ----- | --------------- | ------------------------------------------------------------------------ |

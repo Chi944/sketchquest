@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { initialState } from '../core/rules';
-import type { BoardDefinition, GameState } from '../core/types';
+import type { BoardDefinition, Direction, GameState } from '../core/types';
 import { createBoardWorld, type SceneTheme } from './BoardSceneWorld';
+import { createFirstPersonRig, type MotionCue } from './FirstPersonRig';
 import styles from './BoardScene.module.css';
 
 export interface BoardSceneProps {
@@ -10,6 +11,9 @@ export interface BoardSceneProps {
   state?: GameState;
   won?: boolean;
   theme?: SceneTheme;
+  perspective?: 'first-person' | 'overview';
+  facing?: Direction;
+  motionCue?: MotionCue;
   onUnavailable?: () => void;
 }
 
@@ -19,12 +23,17 @@ export function BoardScene({
   state,
   won = false,
   theme = 'forest',
+  perspective = 'first-person',
+  facing = 'up',
+  motionCue,
   onUnavailable,
 }: BoardSceneProps) {
   const host = useRef<HTMLDivElement>(null);
-  const update = useRef<((state: GameState, won: boolean) => void) | null>(null);
-  const latest = useRef({ state, won, onUnavailable });
-  latest.current = { state, won, onUnavailable };
+  const update = useRef<
+    ((state: GameState, won: boolean, facing: Direction, cue?: MotionCue) => void) | null
+  >(null);
+  const latest = useRef({ state, won, facing, motionCue, onUnavailable });
+  latest.current = { state, won, facing, motionCue, onUnavailable };
 
   useEffect(() => {
     const element = host.current;
@@ -54,13 +63,24 @@ export function BoardScene({
     renderer.shadowMap.type = THREE.PCFShadowMap;
 
     const scene = new THREE.Scene();
-    const camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 80);
+    const firstPerson = perspective === 'first-person';
+    const camera = firstPerson
+      ? new THREE.PerspectiveCamera(70, 1.5, 0.025, 55)
+      : new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 80);
+    if (firstPerson) {
+      const sky = theme === 'frost' ? 0xc3dce5 : theme === 'coast' ? 0xb8d9de : 0xbacfc5;
+      scene.background = new THREE.Color(sky);
+      scene.fog = new THREE.Fog(sky, 7, 21);
+    }
     // A shallow horizontal angle keeps the four movement directions easy to read.
-    camera.position.set(4.2, 11, 10.5);
-    camera.lookAt(0, 0.12, 0);
-    const hemisphere = new THREE.HemisphereLight(0xf4f6e2, 0x365b54, 2.6);
+    if (!firstPerson) {
+      camera.position.set(4.2, 11, 10.5);
+      camera.lookAt(0, 0.12, 0);
+    }
+    scene.add(camera);
+    const hemisphere = new THREE.HemisphereLight(0xf4f6e2, 0x365b54, firstPerson ? 2 : 2.6);
     scene.add(hemisphere);
-    const sunlight = new THREE.DirectionalLight(0xffe7b5, 3.2);
+    const sunlight = new THREE.DirectionalLight(0xffe7b5, firstPerson ? 2.6 : 3.2);
     sunlight.position.set(-4, 10, 5);
     sunlight.castShadow = true;
     sunlight.shadow.mapSize.set(1024, 1024);
@@ -97,8 +117,12 @@ export function BoardScene({
     function requestFrame() {
       if (!disposed && !frame && visible && !document.hidden) frame = requestAnimationFrame(render);
     }
-    const world = createBoardWorld(board, theme, requestFrame);
+    const world = createBoardWorld(board, theme, requestFrame, firstPerson);
     scene.add(world.group);
+    const rig =
+      camera instanceof THREE.PerspectiveCamera
+        ? createFirstPersonRig(camera, board, element)
+        : null;
 
     function render(now: number) {
       frame = 0;
@@ -110,12 +134,13 @@ export function BoardScene({
       }
       previousFrame = now;
       const moving = world.animate(now, reduced);
-      if (!reduced && now < tiltUntil) {
+      const acting = rig?.animate(now, world.playerPosition, reduced) ?? false;
+      if (!firstPerson && !reduced && now < tiltUntil) {
         world.group.rotation.y += (desiredTilt.x - world.group.rotation.y) * 0.16;
         world.group.rotation.x += (desiredTilt.y - world.group.rotation.x) * 0.16;
       }
       renderer.render(scene, camera);
-      if (moving || (!reduced && now < tiltUntil)) requestFrame();
+      if (moving || acting || (!firstPerson && !reduced && now < tiltUntil)) requestFrame();
     }
     function fit() {
       const width = element!.clientWidth;
@@ -123,6 +148,12 @@ export function BoardScene({
       if (!width || !height) return;
       renderer.setSize(width, height, false);
       const aspect = width / height;
+      if (camera instanceof THREE.PerspectiveCamera) {
+        camera.aspect = aspect;
+        camera.updateProjectionMatrix();
+        requestFrame();
+        return;
+      }
       camera.updateMatrixWorld();
       const bounds = new THREE.Box2();
       for (const x of [-board.width / 2 - 0.4, board.width / 2 + 0.4]) {
@@ -144,7 +175,7 @@ export function BoardScene({
       requestFrame();
     }
     function onPointerMove(event: PointerEvent) {
-      if (reduced || event.pointerType !== 'mouse') return;
+      if (firstPerson || reduced || event.pointerType !== 'mouse') return;
       const rect = element!.getBoundingClientRect();
       desiredTilt.set(
         ((event.clientX - rect.left - rect.width / 2) / rect.width) * 0.055,
@@ -154,6 +185,7 @@ export function BoardScene({
       requestFrame();
     }
     function onPointerLeave() {
+      if (firstPerson) return;
       desiredTilt.set(0, 0);
       tiltUntil = performance.now() + 550;
       requestFrame();
@@ -171,6 +203,15 @@ export function BoardScene({
         world.update(
           latest.current.state ?? initialState(board),
           latest.current.won,
+          performance.now(),
+          true,
+          latest.current.facing,
+        );
+        rig?.update(
+          latest.current.state ?? initialState(board),
+          latest.current.facing,
+          latest.current.won,
+          latest.current.motionCue,
           performance.now(),
           true,
         );
@@ -202,11 +243,18 @@ export function BoardScene({
     element.addEventListener('pointermove', onPointerMove);
     element.addEventListener('pointerleave', onPointerLeave);
     canvas.addEventListener('webglcontextlost', onContextLost);
-    update.current = (next, completed) => {
-      world.update(next, completed, performance.now(), reduced);
+    update.current = (next, completed, direction, cue) => {
+      const now = performance.now();
+      world.update(next, completed, now, reduced, direction);
+      rig?.update(next, direction, completed, cue, now, reduced);
       requestFrame();
     };
-    update.current(latest.current.state ?? initialState(board), latest.current.won);
+    update.current(
+      latest.current.state ?? initialState(board),
+      latest.current.won,
+      latest.current.facing,
+      latest.current.motionCue,
+    );
     fit();
 
     return () => {
@@ -221,6 +269,7 @@ export function BoardScene({
       element.removeEventListener('pointerleave', onPointerLeave);
       canvas.removeEventListener('webglcontextlost', onContextLost);
       world.dispose();
+      rig?.dispose();
       shadowGeometry.dispose();
       shadowMaterial.dispose();
       sunlight.shadow.map?.dispose();
@@ -228,19 +277,25 @@ export function BoardScene({
       renderer.forceContextLoss();
       canvas.remove();
     };
-  }, [board, theme]);
+  }, [board, theme, perspective]);
 
   useEffect(() => {
-    update.current?.(state ?? initialState(board), won);
-  }, [board, state, won]);
+    update.current?.(state ?? initialState(board), won, facing, motionCue);
+  }, [board, state, won, facing, motionCue]);
 
   return (
     <div
       ref={host}
-      className={`${styles.scene} ${styles[theme]}`}
+      className={`${styles.scene} ${styles[theme]} ${perspective === 'first-person' ? styles.firstPerson : ''}`}
       aria-hidden="true"
       data-scene-theme={theme}
-    />
+      data-camera={perspective}
+      data-projection={perspective === 'first-person' ? 'perspective' : 'orthographic'}
+      data-facing={facing}
+    >
+      <span className={styles.deathVeil} />
+      <span className={styles.escapeVeil} />
+    </div>
   );
 }
 

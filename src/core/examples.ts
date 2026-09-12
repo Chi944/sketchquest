@@ -50,7 +50,7 @@ export interface Expedition {
 }
 
 /** Separate from the original examples so old imports and the 6→10 demo stay identical. */
-export const EXPEDITIONS: Expedition[] = [
+export const CLASSIC_EXPEDITIONS: Expedition[] = [
   {
     id: 'relic-grove',
     title: 'Relic grove',
@@ -135,5 +135,112 @@ export const EXPEDITIONS: Expedition[] = [
       '#...I.E#',
       '########',
     ]),
+  },
+];
+
+/** Authored version 3 routes: gates and protective equipment are required, never decoration. */
+export const EXPEDITIONS: Expedition[] = [
+  {
+    id: 'relic-grove',
+    title: 'Relic grove',
+    theme: 'forest',
+    difficulty: 'Trailhead',
+    description:
+      'Collect the brass key, open the sealed gate, and recover the relic before leaving.',
+    mechanics: ['Key unlocks gate', 'Required relic'],
+    board: boardFromAscii(['######', '#P.K.#', '###D##', '#R...#', '#...E#', '######'], 3),
+  },
+  {
+    id: 'wardens-gate',
+    title: 'Warden’s gate',
+    theme: 'forest',
+    difficulty: 'Explorer',
+    description:
+      'Move the supply crate to reach protective boots. Cross the spikes, then find the key to the lower chamber.',
+    mechanics: ['Crate', 'Protective boots', 'Spikes', 'Locked gate', 'Relics'],
+    board: boardFromAscii(
+      ['#######', '#PC.F.#', '###S###', '#KR...#', '###D###', '#R...E#', '#######'],
+      3,
+    ),
+  },
+  {
+    id: 'tidal-crossing',
+    title: 'Tidal crossing',
+    theme: 'coast',
+    difficulty: 'Trailhead',
+    description:
+      'Boots protect you from spikes. They cannot save you from the deep water beside this narrow crossing.',
+    mechanics: ['Protective boots', 'Spikes', 'Lethal water', 'Bridge', 'Relics'],
+    board: boardFromAscii(['######', '#PFR~#', '#.#S~#', '#~~B~#', '#R.E~#', '######'], 3),
+  },
+  {
+    id: 'smugglers-cove',
+    title: 'Smuggler’s cove',
+    theme: 'coast',
+    difficulty: 'Pathfinder',
+    description:
+      'Equip your boots and carry the key over two exposed crossings. Three relics activate the final exit.',
+    mechanics: [
+      'Protective boots',
+      'Spikes',
+      'Lethal water',
+      'Bridges',
+      'Locked gate',
+      'Three relics',
+    ],
+    board: boardFromAscii(
+      [
+        '########',
+        '#P.KF..#',
+        '###S####',
+        '#R..BR.#',
+        '#~~B~~~#',
+        '#R...D.#',
+        '######E#',
+        '########',
+      ],
+      3,
+    ),
+  },
+  {
+    id: 'frozen-footsteps',
+    title: 'Frozen footsteps',
+    theme: 'frost',
+    difficulty: 'Explorer',
+    description:
+      'Unlock the ice chamber and find protective boots before sliding toward the spike-lined exit.',
+    mechanics: ['Sliding ice', 'Protective boots', 'Spikes', 'Locked gate', 'Required relic'],
+    board: boardFromAscii(['######', '#PIK##', '###D##', '#RIIS#', '#F.#E#', '######'], 3),
+  },
+  {
+    id: 'winter-vault',
+    title: 'Winter vault',
+    theme: 'frost',
+    difficulty: 'Pathfinder',
+    description:
+      'Reach the protective boots without trapping the key. Brave the ice lanes and recover every relic to open the vault.',
+    mechanics: [
+      'Crate',
+      'Sliding ice',
+      'Protective boots',
+      'Spikes',
+      'Lethal water',
+      'Bridge',
+      'Locked gate',
+      'Three relics',
+    ],
+    board: boardFromAscii(
+      [
+        '########',
+        '#P.CF.K#',
+        '###S##.#',
+        '#RI.IR.#',
+        '#~#B#~##',
+        '#R.I.S##',
+        '#####DE#',
+        '########',
+      ],
+      3,
+    ),
   },
 ];

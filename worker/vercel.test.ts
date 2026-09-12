@@ -1,6 +1,10 @@
 import { BlobPreconditionFailedError } from '@vercel/blob';
 import { describe, expect, it, vi } from 'vitest';
-import { EXAMPLES, EXPEDITIONS } from '../src/core/examples';
+import {
+  EXAMPLES,
+  CLASSIC_EXPEDITIONS as EXPEDITIONS,
+  EXPEDITIONS as SURVIVAL_EXPEDITIONS,
+} from '../src/core/examples';
 import {
   admitVercelShare,
   createVercelApp,
@@ -111,6 +115,16 @@ describe('Vercel deployment adapter', () => {
       const read = await app.request(`${origin}/api/shares/${id}`, {}, env);
       expect(await read.json()).toMatchObject(input);
     }
+  });
+  it('preserves version 3 equipment and hazard terrain in immutable snapshots', async () => {
+    const app = createVercelApp(new MemoryStore());
+    const expedition = SURVIVAL_EXPEDITIONS[5];
+    const input = { title: expedition.title, board: expedition.board };
+    const response = await app.fetch(post(input), env);
+    expect(response.status).toBe(201);
+    const { id } = (await response.json()) as { id: string };
+    const read = await app.request(`${origin}/api/shares/${id}`, {}, env);
+    expect(await read.json()).toMatchObject(input);
   });
   it('requires the verified Hobby guard and a quota secret before any storage access', async () => {
     const store = new MemoryStore();

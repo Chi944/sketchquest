@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { boardHash, emptyBoard } from '../core/board';
+import { boardHash, boardFromAscii, emptyBoard } from '../core/board';
+import { replay } from '../core/rules';
 import { validateWorkspace, type DraftReview, type SavedWorkspace } from './storage';
 
 const board = () => emptyBoard(4, 4);
@@ -36,6 +37,29 @@ const review = (): DraftReview => ({
 });
 
 describe('untrusted saved workspace validation', () => {
+  it('restores version 3 revisions, hazardous drafts, and a valid terminal death session', () => {
+    const value = workspace();
+    const expedition = boardFromAscii(['PF~E', '.S..', '....', '....'], 3);
+    value.revisions[0].board = expedition;
+    value.sessions['revision-1'] = {
+      revisionId: 'revision-1',
+      moves: ['right', 'right'],
+      cursor: 2,
+    };
+    value.draft = { ...expedition, player: -1 };
+    value.parkedDrafts = [
+      { baseRevisionId: 'revision-1', board: value.draft, title: 'Survival draft', review: null },
+    ];
+    const restored = validateWorkspace(value);
+    expect(restored.revisions[0].board).toEqual(expedition);
+    expect(restored.draft).toEqual(value.draft);
+    expect(restored.parkedDrafts?.[0].board.rulesVersion).toBe(3);
+    expect(
+      replay(restored.revisions[0].board, restored.sessions['revision-1'].moves),
+    ).toMatchObject({ valid: true, state: { hasBoots: true, dead: true, deathCause: 'water' } });
+    value.sessions['revision-1'].moves.push('down');
+    expect(() => validateWorkspace(value)).toThrow('history');
+  });
   it('preserves expedition rules in saved revisions, editable drafts and parked drafts', () => {
     const value = workspace();
     const expedition = { ...board(), rulesVersion: 2 as const };

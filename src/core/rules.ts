@@ -8,12 +8,16 @@ export function initialState(board: BoardDefinition): GameState {
     player: board.player,
     crates: [...board.crates].sort((a, b) => a - b),
     hasKey: board.terrain[board.player] === 'key',
-    ...(board.rulesVersion === 2 ? { collectedRelics: relicBit(board, board.player) } : {}),
+    ...(board.rulesVersion >= 2 ? { collectedRelics: relicBit(board, board.player) } : {}),
+    ...(board.rulesVersion === 3
+      ? { hasBoots: board.terrain[board.player] === 'boots', doorOpened: false, dead: false }
+      : {}),
   };
 }
 
 export function isWon(board: BoardDefinition, state: GameState): boolean {
   return (
+    !state.dead &&
     board.terrain[state.player] === 'exit' &&
     (board.rulesVersion === 1 ||
       (state.collectedRelics ?? 0) === (1 << relicCells(board).length) - 1)
@@ -65,6 +69,7 @@ export function transition(
   state: GameState,
   direction: Direction,
 ): TransitionResult {
+  if (board.rulesVersion === 3) return expeditionTransition(board, state, direction);
   if (isWon(board, state))
     return { ok: false, reason: 'You reached the exit. Restart to play again.' };
   const target = neighbour(board, state.player, direction);
@@ -97,6 +102,81 @@ export function transition(
       next.hasKey ||= board.terrain[slideTarget] === 'key';
       next.collectedRelics |= relicBit(board, slideTarget);
     }
+  }
+  return { ok: true, state: next, pushed: crate !== -1, won: isWon(board, next) };
+}
+
+function expeditionObstacle(
+  board: BoardDefinition,
+  cell: number,
+  state: GameState,
+  crate: boolean,
+): string | null {
+  if (cell < 0 || cell >= board.terrain.length) return 'The edge of the board blocks the way.';
+  const terrain = board.terrain[cell];
+  if (terrain === 'wall') return 'A wall blocks the way.';
+  if (crate && (terrain === 'water' || terrain === 'spikes'))
+    return 'Crates cannot cover deep water or spikes. Find a safe route for the crate.';
+  if (terrain === 'door' && !state.doorOpened) {
+    if (crate) return 'Open the gate yourself before pushing a crate through it.';
+    if (!state.hasKey) return 'Collect the key to unlock this door.';
+  }
+  return null;
+}
+
+/** Version 3 deliberately has a separate transition branch to preserve historical shared boards. */
+function expeditionTransition(
+  board: BoardDefinition,
+  state: GameState,
+  direction: Direction,
+): TransitionResult {
+  if (state.dead)
+    return { ok: false, reason: 'Your expedition ended. Undo or restart to try again.' };
+  if (isWon(board, state))
+    return { ok: false, reason: 'You reached the exit. Restart to play again.' };
+  const target = neighbour(board, state.player, direction);
+  const blocked = expeditionObstacle(board, target, state, false);
+  if (blocked) return { ok: false, reason: blocked };
+  const crates = [...state.crates];
+  const crate = crates.indexOf(target);
+  if (crate !== -1) {
+    const destination = neighbour(board, target, direction);
+    const crateBlocked = expeditionObstacle(board, destination, state, true);
+    if (crateBlocked) return { ok: false, reason: crateBlocked };
+    if (crates.includes(destination))
+      return { ok: false, reason: 'Only one crate can be pushed at a time.' };
+    crates[crate] = destination;
+    crates.sort((a, b) => a - b);
+  }
+  const next: GameState = {
+    player: target,
+    crates,
+    hasKey: state.hasKey,
+    collectedRelics: state.collectedRelics ?? 0,
+    hasBoots: state.hasBoots ?? false,
+    doorOpened: state.doorOpened ?? false,
+    dead: false,
+  };
+  const enter = (cell: number) => {
+    next.player = cell;
+    const terrain = board.terrain[cell];
+    if (terrain === 'key' && !next.doorOpened) next.hasKey = true;
+    if (terrain === 'boots') next.hasBoots = true;
+    if (terrain === 'door' && !next.doorOpened) {
+      next.hasKey = false;
+      next.doorOpened = true;
+    }
+    next.collectedRelics! |= relicBit(board, cell);
+    if (terrain === 'water' || (terrain === 'spikes' && !next.hasBoots)) {
+      next.dead = true;
+      next.deathCause = terrain;
+    }
+  };
+  enter(target);
+  while (!next.dead && board.terrain[next.player] === 'ice') {
+    const slideTarget = neighbour(board, next.player, direction);
+    if (expeditionObstacle(board, slideTarget, next, false) || crates.includes(slideTarget)) break;
+    enter(slideTarget);
   }
   return { ok: true, state: next, pushed: crate !== -1, won: isWon(board, next) };
 }

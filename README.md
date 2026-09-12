@@ -2,19 +2,19 @@
 
 **Draw a puzzle. Play it. Change it with words. Check the proof.**
 
-[Open SketchQuest](https://sketchquest-beige.vercel.app) · [Play Winter vault](https://sketchquest-beige.vercel.app/s/RB4ly4aZcaDtElki6hLDYQ) · [Original shared puzzle](https://sketchquest-beige.vercel.app/s/dRbY-OklZBbbxwXPocXcAg)
+[Open SketchQuest](https://sketchquest-beige.vercel.app) · [Play Winter vault in first person](https://sketchquest-beige.vercel.app/s/xTDRNnEMzWVQwam2DfzD-g) · [Original shared puzzle](https://sketchquest-beige.vercel.app/s/dRbY-OklZBbbxwXPocXcAg)
 
 SketchQuest is an original grid-puzzle workbench with a manual editor, a deterministic shortest-path solver, photo preparation, structured change review, and immutable sharing. The production target is **Vercel Hobby**, with a dedicated private Blob store for shared puzzles. The original Cloudflare Free adapter remains available. No paid model fallback, payment feature, or prepaid gateway is configured. Live photo interpretation and free-text generation are currently disabled; the prepared remix is clearly labeled.
 
-![SketchQuest 3D expedition interface](docs/design/expedition-desktop.png)
+![SketchQuest first-person expedition](docs/design/first-person-desktop.png)
 
-The interface combines original generated scenery with a real Three.js puzzle diorama, animated movement, opening gates, and collectible relics. Six new expeditions explore forest ruins, a sunken coast, and frozen passages. [Official game-site inspiration](docs/design/game-site-inspiration.md), [artwork provenance](docs/design/photoreal-generation.md), and [expedition verification](docs/design/expedition-verification.md) record the design and implementation. Verification: 117 unit/integration tests and 30 Chromium browser tests pass; live model evaluation remains unrun.
+Play through the explorer’s eyes in a real Three.js world with gloved hands, animated pickups, hinged gates, sliding, and hazard deaths. Six purposeful expeditions explore forest ruins, a sunken coast, and frozen passages. [First-person rules](docs/first-person-rules.md), [official game-site inspiration](docs/design/game-site-inspiration.md), and [artwork provenance](docs/design/photoreal-generation.md) document the implementation. The [release verification](docs/design/first-person-verification.md) records measured tests and screenshots; live model evaluation remains unrun.
 
 ### Explore the expeditions
 
-Use the world selector above the board or choose one of the six chapter cards. New puzzles introduce impassable water, walkable bridges, sliding ice, and relics that must all be collected before finishing. The new rules support three crates and four relics. The original three examples and their shared URLs remain compatible.
+Use the world selector or six chapter cards. Carry a key to its gate and spend it to open the passage. Collect every relic to awaken the final arch. Iron boots protect against spikes, while deep water remains fatal regardless of inventory. Cross on bridges and check where ice will carry you. Death offers undo and retry. Each authored gate and pair of boots is needed to complete its puzzle; crates block useful routes. Original version 1/2 boards and shared URLs keep their rules.
 
-**3D world / Grid** switches the view without changing the game. Drawing and proposal review use the precise flat grid. The 3D renderer loads on demand, stops rendering after interactions settle, and honors reduced motion. An unavailable WebGL context produces an explicit playable grid fallback.
+**Explore / Map / Grid** switches view while preserving your game. In Explore, **W/S** walk forward/back, **A/D** strafe and **Q/E** turn. The compass and prompt ahead explain your next interaction. Turning costs no moves. Map/Grid use absolute arrow/WASD directions; drawing/review use the flat grid. Expand focuses the page on the game. The 3D renderer loads on demand, stops after interactions settle and honors reduced motion. WebGL failure produces an explicit playable Grid fallback.
 
 ## Run locally
 

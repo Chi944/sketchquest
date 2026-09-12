@@ -390,6 +390,39 @@
   font-size: 13px;
   max-height: 480px;
 }
+.sceneFrame {
+  position: relative;
+}
+.spikes {
+  background: #987d75;
+}
+.boots {
+  background: #dbcba2;
+}
+.fallen .occupant {
+  transform: rotate(75deg) scale(0.8);
+  opacity: 0.55;
+  filter: saturate(0.2);
+}
+@media (max-width: 650px) {
+  .viewBar {
+    flex-wrap: wrap;
+  }
+  .worldView .viewBar {
+    padding-bottom: 9px;
+  }
+  .viewBar > span {
+    flex: 1;
+    min-width: 85px;
+    max-width: 100px;
+    line-height: 1.5;
+  }
+  .viewBar button {
+    min-height: 38px;
+    padding: 6px;
+    gap: 4px;
+  }
+}
 .water {
   background: #5f9eaf;
 }

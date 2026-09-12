@@ -24,10 +24,12 @@ import {
   Download,
   Eraser,
   Flag,
+  Footprints,
   Gem,
   FolderOpen,
   History,
   Keyboard,
+  KeyRound,
   LoaderCircle,
   Maximize2,
   MousePointer2,
@@ -39,6 +41,7 @@ import {
   RotateCcw,
   Share2,
   ShieldCheck,
+  Skull,
   Snowflake,
   SkipBack,
   SkipForward,
@@ -49,7 +52,8 @@ import {
   WandSparkles,
   X,
 } from 'lucide-react';
-import { Board } from './components/Board';
+import { Board, readBoardView, type BoardView } from './components/Board';
+import { ExplorerHUD, type ExplorerFeedback } from './components/ExplorerHUD';
 import { Piece } from './components/Piece';
 import { ExpeditionTrail } from './components/ExpeditionTrail';
 import {
@@ -63,6 +67,7 @@ import {
   validateBoard,
 } from './core/board';
 import { DEMO_LONGER_EDITS, EXAMPLES, EXPEDITIONS } from './core/examples';
+import { relativeDirection, startingFacing } from './core/navigation';
 import {
   collectedRelicCount,
   initialState,
@@ -115,6 +120,8 @@ const TOOL_INFO: Array<{ tool: Tool; label: string; shortcut: string }> = [
   { tool: 'bridge', label: 'Bridge', shortcut: '0' },
   { tool: 'ice', label: 'Ice', shortcut: 'i' },
   { tool: 'relic', label: 'Relic', shortcut: 'r' },
+  { tool: 'spikes', label: 'Spikes', shortcut: 't' },
+  { tool: 'boots', label: 'Iron boots', shortcut: 'b' },
 ];
 
 function revisionFor(
@@ -132,7 +139,7 @@ function revisionFor(
     source,
   };
 }
-const firstRevision = revisionFor(EXAMPLES[0].board, EXAMPLES[0].title, 'example', null);
+const firstRevision = revisionFor(EXPEDITIONS[0].board, EXPEDITIONS[0].title, 'example', null);
 
 function Dialog({
   title,
@@ -197,6 +204,15 @@ export default function App() {
   const [selectedCells, setSelectedCells] = useState<number[]>([]);
   const [modal, setModal] = useState<Modal>(null);
   const [notice, setNotice] = useState('');
+  const [boardView, setBoardView] = useState<BoardView>(readBoardView);
+  const [facing, setFacing] = useState<Direction>(() => startingFacing(firstRevision.board));
+  const [motionCue, setMotionCue] = useState<{ id: number; kind: 'blocked' | 'turn' }>();
+  const [feedback, setFeedback] = useState<ExplorerFeedback | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [traveling, setTraveling] = useState(false);
+  const travelTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const travelLocked = useRef(false);
+  const feedbackSerial = useRef(0);
   const [hydrated, setHydrated] = useState(false);
   const [storageDisabled, setStorageDisabled] = useState(false);
   const [saveLabel, setSaveLabel] = useState('Opening notebook…');
@@ -214,7 +230,7 @@ export default function App() {
     cursor: number;
     running: boolean;
   } | null>(null);
-  const [speed, setSpeed] = useState(450);
+  const [speed, setSpeed] = useState(750);
   const [prompt, setPrompt] = useState('');
   const [aiBusy, setAiBusy] = useState(false);
   const [aiProgress, setAiProgress] = useState('');
@@ -263,6 +279,26 @@ export default function App() {
         : 'forest');
   const totalRelics = relicCells(board).length;
   const foundRelics = gameState ? collectedRelicCount(board, gameState) : 0;
+  const dead = !!gameState?.dead;
+  const firstPerson = boardView === 'first-person' && mode === 'play';
+  // Replays face the recorded movement; looking around never changes the puzzle history.
+  const sceneFacing = playback
+    ? (playback.moves[Math.max(0, playback.cursor - 1)] ?? startingFacing(board))
+    : facing;
+
+  useEffect(() => {
+    setFacing(startingFacing(active.board));
+    setFeedback(null);
+    travelLocked.current = false;
+    setTraveling(false);
+    clearTimeout(travelTimer.current);
+  }, [activeId]);
+  useEffect(() => {
+    if (!feedback) return;
+    const timer = setTimeout(() => setFeedback(null), 3000);
+    return () => clearTimeout(timer);
+  }, [feedback]);
+  useEffect(() => () => clearTimeout(travelTimer.current), []);
 
   const invalidateAI = useCallback(() => {
     operationVersion.current++;
@@ -471,18 +507,92 @@ export default function App() {
     setSessions((value) => ({ ...value, [active.id]: next }));
   }
   function move(direction: Direction) {
-    if (mode !== 'play' || playback || sharedLoading || sharedError) return;
+    if (
+      mode !== 'play' ||
+      playback ||
+      sharedLoading ||
+      sharedError ||
+      ownRun.state.dead ||
+      (firstPerson && travelLocked.current)
+    )
+      return;
     const outcome = transition(active.board, ownRun.state, direction);
     if (!outcome.ok) {
       setNotice(outcome.reason);
+      setMotionCue({ id: ++feedbackSerial.current, kind: 'blocked' });
+      setFeedback({
+        id: feedbackSerial.current,
+        kind: 'blocked',
+        title: 'The way is blocked',
+        detail: outcome.reason,
+      });
       return;
     }
+    if (firstPerson && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      travelLocked.current = true;
+      setTraveling(true);
+      clearTimeout(travelTimer.current);
+      travelTimer.current = setTimeout(() => {
+        travelLocked.current = false;
+        setTraveling(false);
+      }, 650);
+    }
+    const next = outcome.state;
+    const previous = ownRun.state;
+    const picked: ExplorerFeedback | null = next.dead
+      ? {
+          id: ++feedbackSerial.current,
+          kind: 'danger',
+          title: 'Your journey ended',
+          detail:
+            next.deathCause === 'water'
+              ? 'Deep water is fatal. Cross on a bridge.'
+              : 'Iron boots are needed to cross spikes.',
+        }
+      : next.doorOpened && !previous.doorOpened
+        ? {
+            id: ++feedbackSerial.current,
+            kind: 'gate',
+            title: 'The gate is open',
+            detail: 'Key used. This passage stays open.',
+          }
+        : next.hasKey && !previous.hasKey
+          ? {
+              id: ++feedbackSerial.current,
+              kind: 'pickup',
+              title: 'Brass key collected',
+              detail: 'Carry it to the matching gate.',
+            }
+          : next.hasBoots && !previous.hasBoots
+            ? {
+                id: ++feedbackSerial.current,
+                kind: 'pickup',
+                title: 'Iron boots equipped',
+                detail: 'You can cross spikes. Deep water is still fatal.',
+              }
+            : collectedRelicCount(board, next) > foundRelics
+              ? {
+                  id: ++feedbackSerial.current,
+                  kind: 'pickup',
+                  title:
+                    collectedRelicCount(board, next) === totalRelics
+                      ? 'The exit has awakened'
+                      : 'Relic collected',
+                  detail:
+                    collectedRelicCount(board, next) === totalRelics
+                      ? 'All relics found. Follow the light to the arch.'
+                      : `${collectedRelicCount(board, next)} of ${totalRelics} relics powering the exit.`,
+                }
+              : null;
+    setFeedback(picked);
     setNotice(
       outcome.won
         ? 'You found the way out. Nicely explored!'
-        : active.board.terrain[outcome.state.player] === 'exit' && totalRelics > foundRelics
-          ? 'A few relics are still out there. Collect them all, then return to the arch.'
-          : '',
+        : picked
+          ? picked.detail
+          : active.board.terrain[outcome.state.player] === 'exit' && totalRelics > foundRelics
+            ? 'A few relics are still out there. Collect them all, then return to the arch.'
+            : '',
     );
     const moves = [...session.moves.slice(0, session.cursor), direction];
     setSession({ revisionId: active.id, moves, cursor: moves.length });
@@ -490,7 +600,26 @@ export default function App() {
   function restart() {
     setPlayback(null);
     setSession({ revisionId: active.id, moves: [], cursor: 0 });
+    setFacing(startingFacing(active.board));
+    setFeedback(null);
+    travelLocked.current = false;
+    setTraveling(false);
+    clearTimeout(travelTimer.current);
     setNotice('A fresh start. Your puzzle is unchanged.');
+  }
+  function turn(delta: number) {
+    if (dead || won || playback || mode !== 'play') return;
+    setFacing((value) => relativeDirection(value, delta));
+    setMotionCue({ id: ++feedbackSerial.current, kind: 'turn' });
+  }
+  function undoDeath() {
+    setPlayback(null);
+    setSession({ ...session, cursor: Math.max(0, session.cursor - 1) });
+    setFeedback(null);
+    setNotice('Back on safe ground. Your carried items are restored.');
+    travelLocked.current = false;
+    setTraveling(false);
+    clearTimeout(travelTimer.current);
   }
   function setEdit(next: BoardDefinition, nextReview: DraftReview | null = review) {
     if (nextReview?.source === 'text' && boardHash(next) !== hash) {
@@ -755,6 +884,37 @@ export default function App() {
         if (found) setTool(found.tool);
         return;
       }
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      if (event.key === 'Escape' && expanded) {
+        setExpanded(false);
+        return;
+      }
+      if (firstPerson && mode === 'play') {
+        const pressed = event.key.toLowerCase();
+        if (
+          pressed === 'q' ||
+          pressed === 'e' ||
+          pressed === 'arrowleft' ||
+          pressed === 'arrowright'
+        ) {
+          event.preventDefault();
+          if (!event.repeat) turn(pressed === 'q' || pressed === 'arrowleft' ? -1 : 1);
+          return;
+        }
+        const relative: Record<string, number> = {
+          w: 0,
+          arrowup: 0,
+          s: 2,
+          arrowdown: 2,
+          a: -1,
+          d: 1,
+        };
+        if (pressed in relative) {
+          event.preventDefault();
+          if (!event.repeat) move(relativeDirection(facing, relative[pressed]));
+          return;
+        }
+      }
       const key: Record<string, Direction> = {
         ArrowUp: 'up',
         w: 'up',
@@ -796,11 +956,13 @@ export default function App() {
     }
     const next: BoardDefinition = {
       schemaVersion: 1,
-      rulesVersion: interpretation.cells.some((cell) =>
-        ['water', 'bridge', 'ice', 'relic'].includes(cell.terrain),
-      )
-        ? 2
-        : 1,
+      rulesVersion: interpretation.cells.some((cell) => ['spikes', 'boots'].includes(cell.terrain))
+        ? 3
+        : interpretation.cells.some((cell) =>
+              ['water', 'bridge', 'ice', 'relic'].includes(cell.terrain),
+            )
+          ? 2
+          : 1,
       width: interpretation.width,
       height: interpretation.height,
       terrain: Array(interpretation.width * interpretation.height).fill('floor'),
@@ -1095,7 +1257,7 @@ export default function App() {
     );
 
   return (
-    <div className={s.app} data-world={world}>
+    <div className={s.app} data-world={world} data-expanded={expanded && mode === 'play'}>
       <header className={s.header}>
         <a className={s.brand} href="/" aria-label="SketchQuest home">
           <span className={s.brandMark}>
@@ -1147,7 +1309,7 @@ export default function App() {
                 <span>Big adventures.</span>
               </h1>
               <p>
-                A world to get lost in. A path only you can find.
+                Step inside your drawing. Find your own way home.
                 <br />
                 Play, build, and dream up your next adventure.
               </p>
@@ -1171,7 +1333,7 @@ export default function App() {
               </span>
               <div>
                 <strong>The wilds are waiting.</strong>
-                <span>Six new quests to explore</span>
+                <span>Six quests. A first-person adventure.</span>
               </div>
             </div>
           </section>
@@ -1357,6 +1519,23 @@ export default function App() {
                         onCell={mode !== 'play' ? paint : undefined}
                         won={won}
                         theme={world}
+                        view={boardView}
+                        onViewChange={setBoardView}
+                        facing={sceneFacing}
+                        motionCue={motionCue}
+                        overlay={
+                          gameState && (
+                            <ExplorerHUD
+                              board={board}
+                              state={gameState}
+                              facing={sceneFacing}
+                              won={won}
+                              feedback={feedback}
+                              disabled={traveling || !!playback}
+                              onForward={() => move(facing)}
+                            />
+                          )
+                        }
                         label={showingDraft ? 'Proposed puzzle board' : 'Current puzzle board'}
                       />
                     )}
@@ -1434,35 +1613,145 @@ export default function App() {
                           </div>
                         </div>
                       ) : (
-                        <div className={s.playControls}>
-                          <div className={s.keyboardTip}>
-                            <Keyboard size={18} />
-                            <span>
-                              Arrow keys or <kbd>W</kbd>
-                              <kbd>A</kbd>
-                              <kbd>S</kbd>
-                              <kbd>D</kbd>
-                            </span>
-                          </div>
-                          <div className={s.dpad} aria-label="Touch movement controls">
-                            {(['left', 'up', 'down', 'right'] as Direction[]).map((dir) => {
-                              const Icon = DIRECTION_ICON[dir];
-                              return (
+                        <div
+                          className={`${s.playControls} ${firstPerson ? s.explorerControls : ''}`}
+                        >
+                          {firstPerson ? (
+                            <>
+                              <div className={s.explorerLegend}>
+                                <Footprints size={17} />
+                                <span>
+                                  <strong>W S</strong> forward / back <i>·</i> <strong>A D</strong>{' '}
+                                  strafe <i>·</i> <strong>Q E</strong> turn
+                                </span>
+                              </div>
+                              <div
+                                className={s.explorerPad}
+                                role="group"
+                                aria-label="First-person movement controls"
+                              >
                                 <button
-                                  key={dir}
-                                  onClick={() => move(dir)}
-                                  aria-label={`Move ${dir}`}
-                                  disabled={won}
+                                  onClick={() => turn(-1)}
+                                  aria-label="Turn left"
+                                  disabled={won || dead}
                                 >
-                                  <Icon size={20} />
+                                  <RotateCcw size={18} />
+                                  <span>Turn</span>
                                 </button>
-                              );
-                            })}
+                                <button
+                                  onClick={() => move(relativeDirection(facing, -1))}
+                                  aria-label="Strafe left"
+                                  disabled={won || dead || traveling}
+                                >
+                                  <ArrowLeft size={18} />
+                                  <span>Strafe</span>
+                                </button>
+                                <div>
+                                  <button
+                                    onClick={() => move(facing)}
+                                    aria-label="Walk forward"
+                                    disabled={won || dead || traveling}
+                                  >
+                                    <ArrowUp size={20} />
+                                    <span>Forward</span>
+                                  </button>
+                                  <button
+                                    onClick={() => move(relativeDirection(facing, 2))}
+                                    aria-label="Walk backward"
+                                    disabled={won || dead || traveling}
+                                  >
+                                    <ArrowDown size={18} />
+                                    <span>Back</span>
+                                  </button>
+                                </div>
+                                <button
+                                  onClick={() => move(relativeDirection(facing, 1))}
+                                  aria-label="Strafe right"
+                                  disabled={won || dead || traveling}
+                                >
+                                  <ArrowRight size={18} />
+                                  <span>Strafe</span>
+                                </button>
+                                <button
+                                  onClick={() => turn(1)}
+                                  aria-label="Turn right"
+                                  disabled={won || dead}
+                                >
+                                  <Redo2 size={18} />
+                                  <span>Turn</span>
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className={s.keyboardTip}>
+                                <Keyboard size={18} />
+                                <span>
+                                  Arrow keys or <kbd>W</kbd>
+                                  <kbd>A</kbd>
+                                  <kbd>S</kbd>
+                                  <kbd>D</kbd>
+                                </span>
+                              </div>
+                              <div className={s.dpad} aria-label="Touch movement controls">
+                                {(['left', 'up', 'down', 'right'] as Direction[]).map((dir) => {
+                                  const Icon = DIRECTION_ICON[dir];
+                                  return (
+                                    <button
+                                      key={dir}
+                                      onClick={() => move(dir)}
+                                      aria-label={`Move ${dir}`}
+                                      disabled={won || dead}
+                                    >
+                                      <Icon size={20} />
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          )}
+                          <div className={s.playUtilities}>
+                            <button className={s.textButton} onClick={restart}>
+                              <RotateCcw size={16} />
+                              Restart
+                            </button>
+                            <button
+                              className={s.textButton}
+                              onClick={() => {
+                                setExpanded(!expanded);
+                                document
+                                  .getElementById('playground')
+                                  ?.scrollIntoView({ block: 'start', behavior: 'instant' });
+                              }}
+                              aria-label={expanded ? 'Leave expanded view' : 'Expand game'}
+                            >
+                              <Maximize2 size={16} />
+                              {expanded ? 'Collapse' : 'Expand'}
+                            </button>
                           </div>
-                          <button className={s.textButton} onClick={restart}>
-                            <RotateCcw size={16} />
-                            Restart
-                          </button>
+                        </div>
+                      )}
+                      {dead && (
+                        <div className={s.deathMessage} role="alert" aria-label="Journey ended">
+                          <Skull size={30} />
+                          <div>
+                            <strong>Your journey ended</strong>
+                            <p>
+                              {gameState?.deathCause === 'water'
+                                ? 'You fell into deep water. A key or iron boots cannot keep you afloat. Use a bridge.'
+                                : 'The spikes pierced your soles. Find the iron boots before crossing.'}
+                            </p>
+                          </div>
+                          <div className={s.deathActions}>
+                            <button onClick={restart}>
+                              <RotateCcw size={15} />
+                              Retry expedition
+                            </button>
+                            <button onClick={undoDeath}>
+                              <Undo2 size={15} />
+                              Undo fatal step
+                            </button>
+                          </div>
                         </div>
                       )}
                       {won && (
@@ -1540,12 +1829,11 @@ export default function App() {
                         <Flag size={22} />
                       </span>
                       <div>
-                        <h3>Your little quest</h3>
+                        <h3>Your way home</h3>
                         <p>
                           {totalRelics
-                            ? `Find all ${totalRelics} relic${totalRelics > 1 ? 's' : ''}, then reach the open arch.`
-                            : 'Reach the open arch. Pick up the key to unlock the door.'}{' '}
-                          Crates can be pushed, one at a time.
+                            ? `${totalRelics === 1 ? 'Find the relic' : `Find all ${totalRelics} relics`} to awaken the exit, then step through the arch.`
+                            : 'Find a safe route to the open arch.'}
                         </p>
                       </div>
                       {totalRelics > 0 && (
@@ -1561,18 +1849,76 @@ export default function App() {
                           </span>
                         </div>
                       )}
-                      {board.rulesVersion === 2 && (
+                      <div
+                        className={s.gearList}
+                        role="group"
+                        aria-label="Quest equipment"
+                        aria-live="polite"
+                      >
+                        {board.terrain.includes('key') && (
+                          <div data-equipped={gameState?.hasKey || gameState?.doorOpened}>
+                            <KeyRound size={19} />
+                            <span>
+                              <strong>
+                                {gameState?.doorOpened
+                                  ? 'Key used · gate open'
+                                  : gameState?.hasKey
+                                    ? 'Brass key in hand'
+                                    : 'Find the brass key'}
+                              </strong>
+                              <small>
+                                {board.rulesVersion === 3
+                                  ? 'Carry it to the gate. The key stays in the lock.'
+                                  : 'Collect it for permanent access through the door.'}
+                              </small>
+                            </span>
+                          </div>
+                        )}
+                        {board.terrain.includes('boots') && (
+                          <div data-equipped={gameState?.hasBoots}>
+                            <Footprints size={19} />
+                            <span>
+                              <strong>
+                                {gameState?.hasBoots
+                                  ? 'Iron boots equipped'
+                                  : 'Find the iron boots'}
+                              </strong>
+                              <small>Safe on spikes. Never safe in deep water.</small>
+                            </span>
+                          </div>
+                        )}
+                        {board.crates.length > 0 && (
+                          <div>
+                            <Piece kind="crate" />
+                            <span>
+                              <strong>Make room to explore</strong>
+                              <small>
+                                Push one crate at a time. Leave a route to the equipment.
+                              </small>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {board.rulesVersion >= 2 && (
                         <div className={s.terrainGuide}>
                           {board.terrain.includes('water') && (
                             <span>
                               <Waves size={15} />
-                              Water blocks the way; bridges cross it.
+                              {board.rulesVersion === 3
+                                ? 'Deep water is fatal. Cross on a bridge.'
+                                : 'Water blocks the way; bridges cross it.'}
                             </span>
                           )}
                           {board.terrain.includes('ice') && (
                             <span>
                               <Snowflake size={15} />
                               Ice carries you until solid ground.
+                            </span>
+                          )}
+                          {board.terrain.includes('spikes') && (
+                            <span>
+                              <Footprints size={15} />
+                              Spikes are fatal without iron boots.
                             </span>
                           )}
                         </div>
@@ -2251,7 +2597,11 @@ export default function App() {
         <Dialog title="Small world. Simple rules." onClose={() => setModal(null)}>
           <div className={s.rulesList}>
             {[
-              ['player', 'This is you', 'Move up, down, left or right. Reach the exit to finish.'],
+              [
+                'player',
+                'See through your explorer’s eyes',
+                'W/S walk forward/back, A/D strafe, Q/E turn. Arrow left/right also turn. Map and Grid show the full puzzle; their arrows move north, east, south and west.',
+              ],
               ['wall', 'A little roadblock', 'Walls and board edges stop you and your crates.'],
               [
                 'crate',
@@ -2260,23 +2610,29 @@ export default function App() {
               ],
               [
                 'key',
-                'Keep the key',
-                'Stepping onto the key unlocks the door permanently. Crates can cover keys, but cannot collect them.',
+                'Carry the key',
+                board.rulesVersion === 3
+                  ? 'Walk onto the brass key to pick it up. Carry it to the gate; it is used once and stays in the lock. Crates can cover keys but cannot collect them.'
+                  : 'Stepping onto the key grants permanent access through the door. Crates can cover keys, but cannot collect them.',
               ],
               [
                 'door',
                 'A locked way through',
-                'You and your crates need the key before entering a door.',
+                board.rulesVersion === 3
+                  ? 'Step into the locked gate with the key to open it. The gate stays open. Crates can pass only after you open it.'
+                  : 'You and your crates need the key before entering a door.',
               ],
               [
                 'exit',
                 'Your way home',
-                'Only you can finish the quest. A crate on the exit does not win.',
+                'Collect every relic to awaken the exit, then walk through it. Only the explorer can finish; crates cannot activate the arch.',
               ],
               [
                 'water',
                 'A river in the way',
-                'Water stops you and your crates. Find a bridge or another route.',
+                board.rulesVersion === 3
+                  ? 'Stepping into deep water ends your journey, even with a key or iron boots. Cross on a bridge. Crates cannot be pushed into water.'
+                  : 'Water stops you and your crates. Find a bridge or another route.',
               ],
               [
                 'bridge',
@@ -2293,6 +2649,16 @@ export default function App() {
                 'Leave no treasure behind',
                 'Collect every relic before the exit opens. Crates can hide relics, but only the explorer collects them.',
               ],
+              [
+                'boots',
+                'Iron soles, one clear purpose',
+                'Walk onto the boots to equip them for the whole run. They protect against spikes, but do not let you swim.',
+              ],
+              [
+                'spikes',
+                'Watch where you step',
+                'Spikes are fatal without iron boots. Crates cannot be pushed onto them. You can undo a fatal step or retry with all items reset.',
+              ],
             ].map(([piece, title, text]) => (
               <div key={piece}>
                 <span>
@@ -2306,8 +2672,8 @@ export default function App() {
             ))}
           </div>
           <p className={s.helpFoot}>
-            Use the arrow keys, WASD, or the touch arrows. A push is one move and one push. The
-            solver finds the fewest moves, not necessarily the fewest pushes.
+            Turning costs no moves. In Map and Grid, arrows and WASD follow the grid. A push is one
+            move and one push. The solver finds the fewest moves, not necessarily the fewest pushes.
           </p>
         </Dialog>
       )}

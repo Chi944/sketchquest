@@ -38,7 +38,7 @@ describe('versioned expedition rules', () => {
       ),
     ).toBe(true);
     expect(
-      validateBoard({ ...expanded, rulesVersion: 3 }).some(
+      validateBoard({ ...expanded, rulesVersion: 4 }).some(
         (issue) => issue.code === 'rules_version',
       ),
     ).toBe(true);

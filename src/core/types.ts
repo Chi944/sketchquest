@@ -1,5 +1,6 @@
 export const LEGACY_TERRAINS = ['floor', 'wall', 'key', 'door', 'exit'] as const;
-export const TERRAINS = [...LEGACY_TERRAINS, 'water', 'bridge', 'ice', 'relic'] as const;
+export const EXPEDITION_TERRAINS = [...LEGACY_TERRAINS, 'water', 'bridge', 'ice', 'relic'] as const;
+export const TERRAINS = [...EXPEDITION_TERRAINS, 'spikes', 'boots'] as const;
 export type Terrain = (typeof TERRAINS)[number];
 export const DIRECTIONS = ['up', 'right', 'down', 'left'] as const;
 export type Direction = (typeof DIRECTIONS)[number];
@@ -7,7 +8,7 @@ export type Tool = Terrain | 'player' | 'crate' | 'erase' | 'select';
 
 export interface BoardDefinition {
   schemaVersion: 1;
-  rulesVersion: 1 | 2;
+  rulesVersion: 1 | 2 | 3;
   width: number;
   height: number;
   terrain: Terrain[];
@@ -18,8 +19,13 @@ export interface GameState {
   player: number;
   crates: number[];
   hasKey: boolean;
-  /** Version 2 only: bit positions follow relic cells in row-major order. */
+  /** Versions 2+: bit positions follow relic cells in row-major order. */
   collectedRelics?: number;
+  /** Version 3 only. Older states omit these fields entirely. */
+  hasBoots?: boolean;
+  doorOpened?: boolean;
+  dead?: boolean;
+  deathCause?: 'water' | 'spikes';
 }
 export interface RuleIssue {
   code: string;

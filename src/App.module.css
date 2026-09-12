@@ -4001,3 +4001,272 @@
     gap: 8px;
   }
 }
+.explorerControls {
+  flex-wrap: wrap;
+  gap: 13px;
+  background: #edf0e3;
+}
+.explorerLegend {
+  display: flex;
+  width: 100%;
+  gap: 9px;
+  align-items: center;
+  justify-content: center;
+  color: #4d6766;
+  font-size: 11px;
+}
+.explorerLegend strong {
+  color: #233f42;
+  margin-right: 3px;
+  font-size: 11px;
+}
+.explorerLegend i {
+  font-style: normal;
+  padding: 0 7px;
+  color: #859288;
+}
+.explorerPad {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: auto;
+}
+.explorerPad button {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-width: 48px;
+  min-height: 47px;
+  padding: 8px 11px;
+  border: 1px solid #a5b9af;
+  border-bottom: 3px solid #839e8f;
+  border-radius: 6px;
+  background: #fafbec;
+  color: #294c4c;
+}
+.explorerPad button span {
+  font-size: 9px;
+  font-weight: 800;
+}
+.explorerPad button:active:not(:disabled) {
+  transform: translateY(2px);
+  border-bottom-width: 1px;
+}
+.explorerPad button:disabled {
+  opacity: 0.45;
+}
+.explorerPad > div {
+  display: grid;
+  gap: 5px;
+}
+.explorerPad > div button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 91px;
+  padding: 6px 10px;
+  background: #1f5051;
+  border-color: #1c4448;
+  color: #f6ebc9;
+}
+.playUtilities {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.gearList {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 14px;
+  width: 100%;
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid #dce7d62b;
+}
+.gearList > div {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  color: #d6e7df;
+}
+.gearList > div > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.gearList > div > span:first-child:not(:last-child) {
+  width: 23px;
+  height: 25px;
+  flex-shrink: 0;
+}
+.gearList > div > span:last-child {
+  display: grid;
+  gap: 3px;
+}
+.gearList strong {
+  font-size: 12px;
+  color: #fff0c4;
+}
+.gearList small {
+  font-size: 11px;
+  line-height: 1.5;
+}
+.gearList [data-equipped='true'] {
+  color: #ffdb93;
+}
+.deathMessage {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  margin: 0;
+  padding: 20px 24px;
+  border-top: 1px solid #cd8a75;
+  background: #fae9da;
+  color: #693528;
+  animation: deathReveal 450ms ease-out;
+}
+.deathMessage > svg {
+  flex-shrink: 0;
+  color: #975342;
+}
+.deathMessage > div:first-of-type {
+  flex: 1;
+}
+.deathMessage strong {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 20px;
+}
+.deathMessage p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.deathActions {
+  display: grid;
+  gap: 7px;
+  flex-shrink: 0;
+}
+.deathActions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 8px 12px;
+  background: #6d3f31;
+  color: #fff7dd;
+  border: 1px solid #6d3f31;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.deathActions button + button {
+  background: #fff7e8;
+  color: #683d2d;
+}
+.app[data-expanded='true'] .intro,
+.app[data-expanded='true'] .worldNav,
+.app[data-expanded='true'] .sidebar,
+.app[data-expanded='true'] section[id='expeditions'],
+.app[data-expanded='true'] .bottomBar,
+.app[data-expanded='true'] .footer {
+  display: none;
+}
+.app[data-expanded='true'] .workbench {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.app[data-expanded='true'] .main {
+  padding-top: 10px;
+}
+.app[data-expanded='true'] .boardHeading {
+  padding-top: 12px;
+  padding-bottom: 10px;
+}
+.app[data-expanded='true'] .explorerPad > div {
+  display: flex;
+}
+.app[data-expanded='true'] .explorerLegend {
+  width: auto;
+}
+@keyframes deathReveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (max-width: 650px) {
+  .playControls.explorerControls {
+    display: flex;
+    flex-direction: row;
+    padding: 13px 10px;
+    gap: 12px;
+  }
+  .explorerLegend {
+    font-size: 9px;
+    gap: 5px;
+  }
+  .explorerLegend strong {
+    font-size: 10px;
+  }
+  .explorerLegend i {
+    padding: 0 3px;
+  }
+  .explorerLegend > svg {
+    display: none;
+  }
+  .explorerPad {
+    gap: 5px;
+  }
+  .explorerPad button {
+    min-width: 44px;
+    padding: 6px 8px;
+  }
+  .explorerPad > div button {
+    min-width: 76px;
+  }
+  .playUtilities {
+    justify-content: center;
+    width: 100%;
+  }
+  .deathMessage {
+    flex-wrap: wrap;
+    padding: 18px;
+    gap: 11px;
+  }
+  .deathMessage > div:first-of-type {
+    min-width: 180px;
+  }
+  .deathActions {
+    display: flex;
+    width: 100%;
+  }
+  .deathActions button {
+    flex: 1;
+    font-size: 10px;
+  }
+  .app[data-expanded='true'] .explorerPad > div {
+    display: grid;
+  }
+  .app[data-expanded='true'] .explorerLegend {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deathMessage {
+    animation: none;
+  }
+}
+@media (max-width: 370px) {
+  .paperTop {
+    padding: 8px;
+  }
+  .tabs button {
+    padding: 9px 10px;
+    gap: 5px;
+    font-size: 11px;
+  }
+}

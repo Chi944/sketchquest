@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { isRelicCollected } from '../core/rules';
-import type { BoardDefinition, GameState } from '../core/types';
+import { isRelicCollected, relicCells } from '../core/rules';
+import type { BoardDefinition, Direction, GameState } from '../core/types';
 
 export type SceneTheme = 'forest' | 'coast' | 'frost';
 
@@ -20,7 +20,7 @@ interface Motion {
 }
 interface Collectible {
   cell: number;
-  kind: 'key' | 'relic';
+  kind: 'key' | 'relic' | 'boots';
   object: THREE.Group;
 }
 
@@ -29,6 +29,7 @@ export function createBoardWorld(
   board: BoardDefinition,
   theme: SceneTheme,
   invalidate: () => void,
+  firstPerson = false,
 ) {
   const palette = palettes[theme];
   const group = new THREE.Group();
@@ -41,11 +42,18 @@ export function createBoardWorld(
   let activeUntil = 0;
   let previous: GameState | undefined;
   let victory = false;
+  let exitReady = false;
+  let deathAt = 0;
+  let itemHeading = 0;
+  let itemTargetHeading = 0;
+  const collectionMotions = new Map<Collectible, { at: number; fromY: number }>();
   const motions: Motion[] = [];
   const collectibles: Collectible[] = [];
   const doors: THREE.Group[] = [];
+  const insertedKeys: THREE.Group[] = [];
   let doorMotion: { from: number; to: number; started: number } | null = null;
   const portals: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial>[] = [];
+  const exitSeals: THREE.Group[] = [];
   const waterRipples: THREE.Mesh[] = [];
   const crates = new Map<number, THREE.Group>();
   // Small deterministic material textures are generated locally, with no network assets.
@@ -280,6 +288,27 @@ export function createBoardWorld(
       portal.position.set(0, 0.43, -0.08);
       parent.add(portal);
       portals.push(portal);
+      const seal = new THREE.Group();
+      seal.position.set(0, 0.45, 0.02);
+      parent.add(seal);
+      mesh(
+        seal,
+        geometry('exitSealRing', () => new THREE.TorusGeometry(0.13, 0.018, 6, 20)),
+        material(0xc1b486, 0.6, 0.2),
+      );
+      const diamond = mesh(
+        seal,
+        geometry('exitSealGem', () => new THREE.OctahedronGeometry(0.065)),
+        material(0x819d8d, 0.5, 0.15),
+      );
+      diamond.scale.z = 0.4;
+      for (const side of [-1, 1]) box(seal, 0.026, 0.13, 0.018, 0xa59e7f, 0, side * 0.24);
+      exitSeals.push(seal);
+      const reverseSeal = seal.clone();
+      reverseSeal.position.z = -0.18;
+      reverseSeal.rotation.y = Math.PI;
+      parent.add(reverseSeal);
+      exitSeals.push(reverseSeal);
       roundBox(parent, 0.58, 0.04, 0.68, 0xe6cc87, 0, 0.03, 0.15);
       for (const z of [0.22, 0.39]) box(parent, 0.26, 0.012, 0.022, 0xa77d36, 0, 0.058, z);
     } else {
@@ -289,20 +318,72 @@ export function createBoardWorld(
       for (let plank = 0; plank < 5; plank++)
         box(hinge, 0.084, 0.69, 0.06, plank % 2 ? 0x855b31 : 0x9d743e, 0.045 + plank * 0.098, 0.37);
       for (const y of [0.19, 0.58]) box(hinge, 0.49, 0.07, 0.075, 0x474d40, 0.245, y);
-      mesh(
-        hinge,
-        geometry('lock', () => new THREE.TorusGeometry(0.055, 0.018, 5, 12)),
-        material(0xd9ac51, 0.3, 0.65),
-        0.38,
-        0.38,
-        0.06,
+      for (const side of [-1, 1]) {
+        box(hinge, 0.13, 0.15, 0.016, 0x474d40, 0.38, 0.38, side * 0.05);
+        mesh(
+          hinge,
+          geometry('lock', () => new THREE.TorusGeometry(0.048, 0.013, 5, 14)),
+          material(0xd9ac51, 0.3, 0.65),
+          0.38,
+          0.38,
+          side * 0.067,
+        );
+        box(hinge, 0.012, 0.06, 0.02, 0x222e2a, 0.38, 0.365, side * 0.069);
+      }
+      const inserted = new THREE.Group();
+      inserted.position.set(0.38, 0.38, 0);
+      inserted.visible = false;
+      hinge.add(inserted);
+      const stem = mesh(
+        inserted,
+        geometry('inserted-key-shaft', () => new THREE.CylinderGeometry(0.01, 0.01, 0.16, 7)),
+        material(0xf2c36c, 0.26, 0.6),
+        0,
+        0,
+        0.12,
       );
+      stem.rotation.x = Math.PI / 2;
+      mesh(
+        inserted,
+        geometry('inserted-key-ring', () => new THREE.TorusGeometry(0.039, 0.011, 6, 14)),
+        material(0xf2c36c, 0.26, 0.6),
+        0,
+        0,
+        0.205,
+      );
+      insertedKeys.push(inserted);
       doors.push(hinge);
     }
   }
 
   roundBox(group, board.width + 0.38, 0.34, board.height + 0.38, palette.earth, 0, -0.25);
   roundBox(group, board.width + 0.18, 0.12, board.height + 0.18, palette.edge, 0, -0.04);
+  if (firstPerson) {
+    const landscape = mesh(
+      group,
+      geometry('landscape', () => new THREE.PlaneGeometry(150, 150)),
+      material(theme === 'frost' ? 0xc2dadc : theme === 'coast' ? 0x779c86 : 0x64805b),
+      0,
+      -0.16,
+    );
+    landscape.rotation.x = -Math.PI / 2;
+    landscape.castShadow = false;
+    // Distant silhouettes sit outside the legal grid and give the courtyard a horizon.
+    for (let index = 0; index < 14; index++) {
+      const angle = (index * Math.PI * 2) / 14;
+      const radius = Math.max(board.width, board.height) / 2 + 5 + (index % 3);
+      const peak = mesh(
+        group,
+        geometry('distant-rock', () => new THREE.DodecahedronGeometry(1, 0)),
+        material(theme === 'frost' ? 0x8ca8b5 : 0x4f7564),
+        Math.cos(angle) * radius,
+        1.3,
+        Math.sin(angle) * radius,
+      );
+      peak.scale.set(1.5 + (index % 2), 2.4 + (index % 3), 1.6);
+      peak.castShadow = false;
+    }
+  }
   // Subtle brass corner studs make the board feel like an expedition instrument.
   for (const x of [-1, 1])
     for (const z of [-1, 1]) {
@@ -371,17 +452,62 @@ export function createBoardWorld(
       }
     }
     if (terrain === 'wall') {
-      roundBox(tile, 0.83, 0.26, 0.82, palette.stone, 0, 0.22);
-      roundBox(tile, 0.8, 0.2, 0.77, cell % 2 ? palette.stone : palette.edge, 0.02, 0.445);
-      roundBox(tile, 0.85, 0.065, 0.82, theme === 'frost' ? 0xe5f4ee : 0xa6ac82, 0, 0.565);
-      if (cell % 3 === 0) leaves(tile, -0.2, 0.61, 0.1, cell);
-      box(tile, 0.013, 0.2, 0.004, palette.earth, 0.13, 0.45, 0.392);
-    } else if (terrain === 'key' || terrain === 'relic') {
+      if (firstPerson) {
+        for (let course = 0; course < 5; course++) {
+          const stones =
+            course % 2
+              ? [
+                  [0.19, -0.36],
+                  [0.43, 0],
+                  [0.19, 0.36],
+                ]
+              : [
+                  [0.43, -0.245],
+                  [0.43, 0.245],
+                ];
+          for (const [width, x] of stones) {
+            const tone =
+              (cell + course + Math.round(x * 10)) % 3 === 0 ? palette.edge : palette.stone;
+            roundBox(tile, width, 0.305, 0.905, tone, x, 0.255 + course * 0.315);
+          }
+        }
+        roundBox(tile, 0.99, 0.1, 0.99, theme === 'frost' ? 0xe5f4ee : 0xa6ac82, 0, 1.74);
+        if (cell % 3 === 0) leaves(tile, -0.2, 1.81, 0.1, cell);
+      } else {
+        roundBox(tile, 0.83, 0.26, 0.82, palette.stone, 0, 0.22);
+        roundBox(tile, 0.8, 0.2, 0.77, cell % 2 ? palette.stone : palette.edge, 0.02, 0.445);
+        roundBox(tile, 0.85, 0.065, 0.82, theme === 'frost' ? 0xe5f4ee : 0xa6ac82, 0, 0.565);
+        if (cell % 3 === 0) leaves(tile, -0.2, 0.61, 0.1, cell);
+        box(tile, 0.013, 0.2, 0.004, palette.earth, 0.13, 0.45, 0.392);
+      }
+    } else if (terrain === 'spikes') {
+      roundBox(tile, 0.79, 0.045, 0.79, 0x696958, 0, 0.115);
+      for (let spike = 0; spike < 9; spike++) {
+        mesh(
+          tile,
+          geometry('spike', () => new THREE.ConeGeometry(0.063, 0.3, 7)),
+          material(0x959d9d, 0.4, 0.5),
+          ((spike % 3) - 1) * 0.23,
+          0.28,
+          (Math.floor(spike / 3) - 1) * 0.23,
+        );
+      }
+      for (const side of [-1, 1]) box(tile, 0.71, 0.015, 0.035, 0xbb7743, 0, 0.147, side * 0.36);
+    } else if (terrain === 'key' || terrain === 'relic' || terrain === 'boots') {
       const item = new THREE.Group();
       item.position.copy(position(cell, 0.44));
       group.add(item);
       const brass = material(0xf2c36c, 0.26, 0.6);
-      if (terrain === 'key') {
+      if (terrain === 'boots') {
+        for (const side of [-1, 1]) {
+          roundBox(item, 0.15, 0.05, 0.3, 0x393e36, side * 0.13, -0.16, 0.035);
+          roundBox(item, 0.14, 0.15, 0.25, 0x855b31, side * 0.13, -0.075, 0.04);
+          roundBox(item, 0.14, 0.2, 0.14, 0x9d743e, side * 0.13, 0.05, -0.02);
+          for (let lace = 0; lace < 3; lace++)
+            box(item, 0.1, 0.02, 0.02, 0xd0ab76, side * 0.13, lace * 0.045, 0.063);
+          box(item, 0.16, 0.035, 0.15, 0xc8b272, side * 0.13, 0.13, -0.02);
+        }
+      } else if (terrain === 'key') {
         mesh(
           item,
           geometry('keyRing', () => new THREE.TorusGeometry(0.11, 0.033, 7, 18)),
@@ -433,6 +559,15 @@ export function createBoardWorld(
       gateway.position.y = 0.095;
       tile.add(gateway);
       arch(gateway, terrain === 'exit');
+      if (firstPerson) {
+        gateway.scale.set(1.1, 1.55, 1);
+        const walls = (target: number) => (board.terrain[target] === 'wall' ? 1 : 0);
+        const horizontalWalls =
+          (cell % board.width ? walls(cell - 1) : 1) +
+          (cell % board.width < board.width - 1 ? walls(cell + 1) : 1);
+        const verticalWalls = walls(cell - board.width) + walls(cell + board.width);
+        if (verticalWalls > horizontalWalls) gateway.rotation.y = Math.PI / 2;
+      }
     } else if (terrain === 'floor' && cell % 5 === 2) {
       // Small engraved seams preserve the grid without introducing fake obstacles.
       box(tile, 0.14, 0.008, 0.013, palette.edge, 0.25, 0.094, 0.33);
@@ -440,6 +575,7 @@ export function createBoardWorld(
   });
 
   const player = new THREE.Group();
+  player.visible = !firstPerson;
   group.add(player);
   const playerBase = mesh(
     player,
@@ -503,6 +639,7 @@ export function createBoardWorld(
     now: number,
     reduced: boolean,
     hop = 0,
+    delay = 0,
   ) {
     const existing = motions.findIndex((motion) => motion.object === object);
     if (existing !== -1) motions.splice(existing, 1);
@@ -516,20 +653,45 @@ export function createBoardWorld(
       object,
       from: object.position.clone(),
       to: destination,
-      started: now,
+      started: now + delay,
       duration: Math.min(620, 220 + distance * 65),
       hop,
     });
   }
 
-  function update(state: GameState, won: boolean, now: number, reduced: boolean) {
+  function update(
+    state: GameState,
+    won: boolean,
+    now: number,
+    reduced: boolean,
+    facing: Direction = 'up',
+  ) {
     const initial = !previous;
+    const headings: Record<Direction, number> = {
+      up: 0,
+      right: -Math.PI / 2,
+      down: Math.PI,
+      left: Math.PI / 2,
+    };
+    itemTargetHeading = headings[facing];
+    if (initial || reduced) itemHeading = itemTargetHeading;
+    const unlocking =
+      board.rulesVersion === 3 && state.doorOpened && !previous?.doorOpened && !initial;
+    const rewinding = Boolean(
+      previous &&
+      ((previous.dead && !state.dead) ||
+        (previous.doorOpened && !state.doorOpened) ||
+        (previous.collectedRelics ?? 0) > (state.collectedRelics ?? 0) ||
+        (previous.hasBoots && !state.hasBoots) ||
+        (previous.hasKey && !state.hasKey && !state.doorOpened)),
+    );
     move(
       player,
       position(state.player),
       now,
-      reduced || initial,
-      board.terrain[state.player] === 'ice' ? 0 : 0.07,
+      reduced || initial || rewinding,
+      firstPerson || board.terrain[state.player] === 'ice' ? 0 : 0.07,
+      unlocking && !reduced ? 180 : 0,
     );
     const nextCells = new Set(state.crates);
     const removed = [...crates.keys()].filter((cell) => !nextCells.has(cell));
@@ -543,7 +705,7 @@ export function createBoardWorld(
         crate.position.copy(position(cell, 0.09));
       }
       crates.set(cell, crate);
-      move(crate, position(cell, 0.09), now, reduced || initial);
+      move(crate, position(cell, 0.09), now, reduced || initial || rewinding);
     }
     for (const cell of removed) {
       crates.get(cell)?.removeFromParent();
@@ -551,65 +713,153 @@ export function createBoardWorld(
     }
     for (const item of collectibles) {
       const collected =
-        item.kind === 'key' ? state.hasKey : isRelicCollected(board, state, item.cell);
-      if (item.object.visible && collected && !initial && !reduced)
+        item.kind === 'key'
+          ? state.hasKey || Boolean(state.doorOpened)
+          : item.kind === 'boots'
+            ? Boolean(state.hasBoots)
+            : isRelicCollected(board, state, item.cell);
+      const wasCollected =
+        previous &&
+        (item.kind === 'key'
+          ? previous.hasKey || Boolean(previous.doorOpened)
+          : item.kind === 'boots'
+            ? Boolean(previous.hasBoots)
+            : isRelicCollected(board, previous, item.cell));
+      if (collected && !wasCollected && !initial && !reduced) {
         burst = { at: position(item.cell, 0.5), started: now, duration: 700, large: false };
-      item.object.visible = !collected;
+        collectionMotions.set(item, { at: now, fromY: item.object.position.y });
+      } else if (!collected || initial || reduced || rewinding) {
+        collectionMotions.delete(item);
+        item.object.visible = !collected;
+        item.object.scale.setScalar(1);
+        item.object.position.y = 0.45;
+      }
     }
-    const doorAngle = state.hasKey ? -Math.PI * 0.44 : 0;
+    const isOpen = board.rulesVersion === 3 ? state.doorOpened : state.hasKey;
+    const wasOpen = board.rulesVersion === 3 ? previous?.doorOpened : previous?.hasKey;
+    const doorAngle = isOpen ? -Math.PI * 0.48 : 0;
     if (initial || reduced) {
       doors.forEach((door) => {
         door.rotation.y = doorAngle;
       });
       doorMotion = null;
-    } else if (state.hasKey !== previous?.hasKey && doors.length) {
-      doorMotion = { from: doors[0].rotation.y, to: doorAngle, started: now };
+      insertedKeys.forEach((key) => {
+        key.visible = board.rulesVersion === 3 && Boolean(isOpen);
+      });
+    } else if (isOpen !== wasOpen && doors.length) {
+      doorMotion = {
+        from: doors[0].rotation.y,
+        to: doorAngle,
+        started: now + (unlocking ? 140 : 0),
+      };
+      insertedKeys.forEach((key) => {
+        key.visible = false;
+        key.rotation.y = facing === 'up' || facing === 'left' ? 0 : Math.PI;
+      });
+    }
+    exitReady = relicCells(board).every((cell) => isRelicCollected(board, state, cell));
+    portals.forEach((portal) => {
+      portal.material.color.setHex(
+        exitReady ? (theme === 'frost' ? 0xa2f6ff : 0xf8d47c) : 0x526e68,
+      );
+      portal.material.opacity = exitReady ? (won ? 0.85 : 0.62) : 1;
+    });
+    exitSeals.forEach((seal) => {
+      seal.visible = !exitReady;
+    });
+    if (state.dead && !previous?.dead) {
+      deathAt = initial || reduced ? now - 1200 : now;
+      if (!initial && !reduced)
+        burst = { at: position(state.player, 0.3), started: now + 200, duration: 950, large: true };
+    }
+    if (!state.dead) {
+      deathAt = 0;
+      player.rotation.set(0, 0, 0);
     }
     if (won && !victory && !initial && !reduced)
       burst = { at: position(state.player, 0.6), started: now, duration: 1500, large: true };
     victory = won;
     previous = state;
-    activeUntil = reduced ? now : now + (won ? 1600 : 1100);
+    activeUntil = reduced ? now : now + (won || state.dead ? 1700 : 1100);
     if (reduced) {
       burst = null;
       particles.forEach((particle) => {
         particle.visible = false;
       });
     }
+    if (rewinding) {
+      burst = null;
+      particles.forEach((particle) => {
+        particle.visible = false;
+        (particle.material as THREE.MeshBasicMaterial).opacity = 0;
+      });
+    }
   }
 
   function animate(now: number, reduced: boolean) {
     if (doorMotion) {
-      const t = reduced ? 1 : Math.min(1, (now - doorMotion.started) / 460);
+      const t = reduced ? 1 : Math.max(0, Math.min(1, (now - doorMotion.started) / 540));
       const angle = THREE.MathUtils.lerp(doorMotion.from, doorMotion.to, 1 - Math.pow(1 - t, 3));
       doors.forEach((door) => {
         door.rotation.y = angle;
+      });
+      insertedKeys.forEach((key) => {
+        key.visible = board.rulesVersion === 3 && Boolean(previous?.doorOpened) && t > 0.68;
       });
       if (t === 1) doorMotion = null;
     }
     for (let index = motions.length - 1; index >= 0; index--) {
       const motion = motions[index];
-      const t = reduced ? 1 : Math.min(1, (now - motion.started) / motion.duration);
+      const t = reduced ? 1 : Math.max(0, Math.min(1, (now - motion.started) / motion.duration));
       const eased = t * t * (3 - 2 * t);
       motion.object.position.lerpVectors(motion.from, motion.to, eased);
       motion.object.position.y += Math.sin(t * Math.PI) * motion.hop;
       if (t === 1) motions.splice(index, 1);
     }
+    for (const [item, motion] of collectionMotions) {
+      const t = reduced ? 1 : Math.min(1, (now - motion.at) / 520);
+      item.object.position.y = motion.fromY + t * 0.45;
+      item.object.scale.setScalar(Math.max(0.001, 1 - t * t));
+      item.object.rotation.y += 0.12;
+      if (t === 1) {
+        item.object.visible = false;
+        collectionMotions.delete(item);
+      }
+    }
+    if (previous?.dead) {
+      const t = reduced ? 1 : Math.max(0, Math.min(1, (now - deathAt - 180) / 950));
+      if (!firstPerson) {
+        player.rotation.z = t * 1.2;
+        player.position.y = previous.deathCause === 'water' ? -t * 0.45 : 0;
+      }
+    }
     if (!reduced && now < activeUntil) {
       const wave = Math.sin(now * 0.002);
+      const headingDifference = Math.atan2(
+        Math.sin(itemTargetHeading - itemHeading),
+        Math.cos(itemTargetHeading - itemHeading),
+      );
+      itemHeading += headingDifference * 0.25;
       collectibles.forEach((item, index) => {
+        if (!item.object.visible || collectionMotions.has(item)) return;
         item.object.position.y = 0.45 + Math.sin(now * 0.0025 + index) * 0.035;
-        item.object.rotation.y = Math.sin(now * 0.0017 + index) * 0.38;
+        item.object.rotation.y =
+          (firstPerson ? itemHeading : 0.65) +
+          Math.sin(now * 0.0017 + index) * (firstPerson ? 0.09 : 0.38);
       });
       waterRipples.forEach((ripple, index) => {
         ripple.scale.x = 1 + Math.sin(now * 0.003 + index) * 0.14;
       });
       portals.forEach((portal) => {
-        portal.material.opacity = (victory ? 0.72 : 0.4) + wave * 0.06;
+        if (exitReady) portal.material.opacity = (victory ? 0.85 : 0.62) + wave * 0.04;
       });
     }
+    if (reduced || !previous)
+      collectibles.forEach((item) => {
+        item.object.rotation.y = firstPerson ? itemHeading : 0.65;
+      });
     if (burst) {
-      const t = reduced ? 1 : Math.min(1, (now - burst.started) / burst.duration);
+      const t = reduced ? 1 : Math.max(0, Math.min(1, (now - burst.started) / burst.duration));
       particles.forEach((particle, index) => {
         const angle = index * 2.399963;
         const speed = (burst!.large ? 1.4 : 0.65) * (0.6 + (index % 4) * 0.15);
@@ -621,12 +871,25 @@ export function createBoardWorld(
         );
         particle.rotation.set(t * 4 + index, t * 5, 0);
         (particle.material as THREE.MeshBasicMaterial).opacity = (1 - t) * 0.9;
+        (particle.material as THREE.MeshBasicMaterial).color.setHex(
+          previous?.dead
+            ? previous.deathCause === 'water'
+              ? 0x7fc9d6
+              : 0xd1a177
+            : index % 3
+              ? 0xf8d88e
+              : 0x9ff2d1,
+        );
         particle.scale.setScalar(1 - t * 0.6);
       });
       if (t === 1) burst = null;
     }
     return (
-      motions.length > 0 || doorMotion !== null || burst !== null || (!reduced && now < activeUntil)
+      motions.length > 0 ||
+      collectionMotions.size > 0 ||
+      doorMotion !== null ||
+      burst !== null ||
+      (!reduced && now < activeUntil)
     );
   }
 
@@ -637,5 +900,5 @@ export function createBoardWorld(
     textures.forEach((value) => value.dispose());
     group.clear();
   }
-  return { group, update, animate, dispose };
+  return { group, playerPosition: player.position, update, animate, dispose };
 }

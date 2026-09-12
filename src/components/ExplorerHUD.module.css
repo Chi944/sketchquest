@@ -1,0 +1,245 @@
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  color: #fff9df;
+  font-family: 'Nunito Sans', sans-serif;
+}
+.topline {
+  position: absolute;
+  top: 15px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+.location {
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+  background: #102c35ed;
+  padding: 9px 11px;
+  border: 1px solid #78928d70;
+  border-radius: 4px;
+}
+.location b {
+  color: #efc87f;
+  margin-left: 10px;
+}
+.compass {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  background: #102c35ed;
+  border: 1px solid #78928d70;
+  padding: 8px 11px;
+  border-radius: 4px;
+}
+.compass > span {
+  color: #cad8d0;
+  margin-left: 10px;
+  font-size: 10px;
+}
+.reticle {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 5px;
+  height: 5px;
+  transform: translate(-50%, -50%);
+  background: #fff8dce6;
+  box-shadow: 0 0 0 3px #193a4950;
+  border-radius: 50%;
+}
+.bottomline {
+  position: absolute;
+  bottom: 14px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.interaction {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  max-width: 420px;
+  min-height: 56px;
+  width: 100%;
+  text-align: left;
+  background: #102c35f0;
+  color: #ffeed1;
+  border: 1px solid #91a89a90;
+  border-radius: 6px;
+  box-shadow: 0 3px 12px #061e3330;
+  pointer-events: auto;
+}
+.interaction:disabled {
+  opacity: 1;
+  cursor: default;
+  color: #d2dcd2;
+  background: #102c35ed;
+}
+.interaction:not(:disabled):hover {
+  background: #244841;
+  border-color: #f0c674;
+}
+.interaction > span {
+  display: grid;
+  gap: 3px;
+  flex: 1;
+}
+.interaction strong {
+  font-size: 13px;
+}
+.interaction small {
+  font-size: 11px;
+  line-height: 1.35;
+  color: #e0e7db;
+}
+.interaction kbd {
+  background: #ecd5a3;
+  color: #253d3a;
+  padding: 4px 7px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 900;
+}
+.interaction.danger {
+  border-color: #d98664;
+  background: #431f1fed;
+  color: #ffd3b5;
+}
+.inventory {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+}
+.inventory > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-size: 11px;
+  background: #132f37f2;
+  border: 1px solid #8b9f9870;
+  color: #d4dfd7;
+}
+.inventory > span[data-active='true'] {
+  color: #ffdc93;
+  border-color: #d6bc74a0;
+  background: #223b32f2;
+}
+.feedback {
+  position: absolute;
+  left: 50%;
+  top: 22%;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 3px;
+  width: max-content;
+  max-width: calc(100% - 36px);
+  text-align: center;
+  background: #132f37f2;
+  border: 1px solid #e4c48980;
+  padding: 12px 22px;
+  border-radius: 6px;
+  animation: reveal 260ms ease-out;
+  box-shadow: 0 8px 30px #092d382f;
+}
+.feedback strong {
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 19px;
+  color: #ffdc93;
+}
+.feedback span {
+  font-size: 11px;
+  line-height: 1.5;
+  max-width: 310px;
+}
+.feedback.blocked,
+.feedback.danger {
+  border-color: #da997a;
+}
+.dead .reticle {
+  display: none;
+}
+@keyframes reveal {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@media (max-width: 650px) {
+  .topline {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    gap: 5px;
+  }
+  .location {
+    font-size: 8px;
+    letter-spacing: 0.7px;
+    padding: 7px 8px;
+  }
+  .compass {
+    font-size: 10px;
+    gap: 5px;
+    padding: 6px 8px;
+  }
+  .compass > span {
+    display: none;
+  }
+  .bottomline {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    gap: 7px;
+  }
+  .interaction {
+    padding: 8px 10px;
+    gap: 8px;
+    min-height: 54px;
+  }
+  .interaction strong {
+    font-size: 11px;
+  }
+  .interaction small {
+    font-size: 10px;
+  }
+  .inventory {
+    gap: 5px;
+  }
+  .inventory > span {
+    padding: 7px 8px;
+    gap: 5px;
+    font-size: 10px;
+  }
+  .inventory svg {
+    width: 15px;
+  }
+  .feedback {
+    top: 20%;
+    padding: 10px 14px;
+  }
+  .feedback strong {
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .feedback {
+    animation: none;
+  }
+}

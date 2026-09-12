@@ -1,31 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { EXPEDITIONS } from '../src/core/examples';
 import { solve } from '../src/solver/search';
-import { currentBoard, openApp, proposedBoard, readNotebook } from './helpers';
-
-/** Fresh first-visit coverage intentionally bypasses openApp's legacy 2D preference. */
-async function openFirstVisit(page: Page) {
-  for (const endpoint of ['interpret', 'propose']) {
-    await page.route(`**/api/${endpoint}`, (route) =>
-      route.fulfill({
-        status: 503,
-        json: { error: { code: 'TEST_AI_BLOCKED', message: 'Live AI is disabled in this test.' } },
-      }),
-    );
-  }
-  await page.route('**/api/status', (route) =>
-    route.fulfill({
-      json: {
-        aiEnabled: false,
-        sharingEnabled: true,
-        model: 'mocked-test-provider',
-        message: 'Browser test configuration.',
-      },
-    }),
-  );
-  await page.goto('/');
-  await expect(page.getByText('Saved in this browser', { exact: true })).toBeVisible();
-}
+import { currentBoard, openApp, openFirstVisit, proposedBoard, readNotebook } from './helpers';
 
 async function webglAvailable(page: Page) {
   return page.evaluate(() => {
@@ -37,7 +13,10 @@ async function webglAvailable(page: Page) {
   });
 }
 
-async function expectWorldOrExplicitFallback(page: Page) {
+async function expectWorldOrExplicitFallback(
+  page: Page,
+  view: 'First-person view' | '3D world view' = 'First-person view',
+) {
   const supported = await webglAvailable(page);
   if (!supported) {
     test.info().annotations.push({
@@ -50,7 +29,7 @@ async function expectWorldOrExplicitFallback(page: Page) {
     await expect(currentBoard(page)).toBeVisible();
     return false;
   }
-  await expect(page.getByRole('button', { name: '3D world view', exact: true })).toHaveAttribute(
+  await expect(page.getByRole('button', { name: view, exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
   );
@@ -65,17 +44,24 @@ async function expectWorldOrExplicitFallback(page: Page) {
     )
     .toBe(true);
   await expect(page.getByText('Opening your little world…', { exact: true })).toHaveCount(0);
+  await expect(
+    page.locator(`[data-camera="${view === 'First-person view' ? 'first-person' : 'overview'}"]`),
+  ).toBeVisible();
   return true;
 }
 
-test('first visit renders the 3D puzzle, and view changes preserve play and reload preference', async ({
+test('first visit renders the first-person expedition, and map/grid changes preserve play and reload preference', async ({
   page,
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await openFirstVisit(page);
+  await expect(
+    page.getByRole('heading', { name: EXPEDITIONS[0].title, level: 2, exact: true }),
+  ).toBeVisible();
   const supported = await expectWorldOrExplicitFallback(page);
-  await page.getByRole('button', { name: 'Move right', exact: true }).click();
+  if (supported) await page.keyboard.press('w');
+  else await page.getByRole('button', { name: 'Move right', exact: true }).click();
   await page.getByRole('button', { name: '2D grid view', exact: true }).click();
   await expect(
     currentBoard(page).getByRole('button', { name: 'C2, floor, player', exact: true }),
@@ -98,7 +84,7 @@ test('first visit renders the 3D puzzle, and view changes preserve play and relo
   ).toBeVisible();
   if (supported) {
     await page.getByRole('button', { name: '3D world view', exact: true }).click();
-    await expectWorldOrExplicitFallback(page);
+    await expectWorldOrExplicitFallback(page, '3D world view');
     await page.getByRole('button', { name: 'Step back', exact: true }).click();
     await page.getByRole('button', { name: '2D grid view', exact: true }).click();
     await expect(
@@ -113,7 +99,8 @@ test('reduced motion keeps the 3D scene still while movement remains usable', as
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await openFirstVisit(page);
-  if (await expectWorldOrExplicitFallback(page)) {
+  const supported = await expectWorldOrExplicitFallback(page);
+  if (supported) {
     const canvas = page.locator('canvas').filter({ visible: true });
     const firstFrame = await canvas.screenshot({ animations: 'allow' });
     // A real interval checks that idle Three.js motion honors the user's preference.
@@ -123,7 +110,8 @@ test('reduced motion keeps the 3D scene still while movement remains usable', as
       Array.from(firstFrame),
     );
   }
-  await page.getByRole('button', { name: 'Move right', exact: true }).click();
+  if (supported) await page.keyboard.press('w');
+  else await page.getByRole('button', { name: 'Move right', exact: true }).click();
   await page.getByRole('button', { name: '2D grid view', exact: true }).click();
   await expect(
     currentBoard(page).getByRole('button', { name: 'C2, floor, player', exact: true }),

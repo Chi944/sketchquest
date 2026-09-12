@@ -105,3 +105,45 @@
   width: 85% !important;
   height: 85% !important;
 }
+.spikes {
+  background: radial-gradient(ellipse at 50% 77%, #462e27 0, transparent 65%);
+}
+.spikes i,
+.spikes b {
+  position: absolute;
+  bottom: 22%;
+  width: 25%;
+  height: 55%;
+  background: linear-gradient(110deg, #f4d1a7 0, #a77e72 40%, #52484a 65%);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.spikes i {
+  left: 23%;
+  transform: rotate(-9deg);
+}
+.spikes b {
+  right: 20%;
+  transform: rotate(9deg);
+}
+.boots i,
+.boots b {
+  position: absolute;
+  top: 18%;
+  width: 29%;
+  height: 65%;
+  border-radius: 5px 4px 4px 8px;
+  background: linear-gradient(100deg, #b8b5a3, #6e7774 50%, #333f40);
+  border-bottom: 4px solid #273332;
+  box-shadow:
+    inset 0 3px 0 #dbc690,
+    1px 2px 1px #353d3970;
+  clip-path: polygon(20% 0, 95% 0, 95% 100%, 0 100%, 0 65%, 20% 55%);
+}
+.boots i {
+  left: 19%;
+  transform: rotate(-8deg);
+}
+.boots b {
+  right: 17%;
+  transform: rotate(5deg);
+}

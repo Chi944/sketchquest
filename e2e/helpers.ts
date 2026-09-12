@@ -1,8 +1,8 @@
 import { expect, type Page, type Route } from '@playwright/test';
-import type { Interpretation } from '../src/core/types';
+import type { BoardDefinition, Interpretation } from '../src/core/types';
 import type { SavedWorkspace } from '../src/state/storage';
 
-export async function openApp(page: Page, aiEnabled = false) {
+export async function blockLiveAI(page: Page, aiEnabled = false) {
   // Deliberate HTTP mocks: these tests assess UI behavior, not model quality.
   // Every model endpoint is intercepted, even when a developer configured live AI.
   await page.route('**/api/interpret', (route) =>
@@ -31,7 +31,19 @@ export async function openApp(page: Page, aiEnabled = false) {
       },
     }),
   );
+}
+
+/** First visit preserves the default expedition and first-person presentation. */
+export async function openFirstVisit(page: Page) {
+  await blockLiveAI(page);
   await page.goto('/');
+  await expect(page.getByText('Saved in this browser', { exact: true })).toBeVisible();
+}
+
+export async function openApp(page: Page, aiEnabled = false) {
+  await blockLiveAI(page, aiEnabled);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'First steps', exact: true }).click();
   // Legacy gameplay tests use the visible editing grid; expedition tests exercise 3D separately.
   await page.getByRole('button', { name: '2D grid view', exact: true }).click();
   await expect(
@@ -44,6 +56,22 @@ export const currentBoard = (page: Page) =>
   page.getByRole('group', { name: 'Current puzzle board', exact: true });
 export const proposedBoard = (page: Page) =>
   page.getByRole('group', { name: 'Proposed puzzle board', exact: true });
+
+/** Exercise the public JSON import and review flow rather than mutating app state. */
+export async function importPuzzle(page: Page, board: BoardDefinition, title: string) {
+  const chooser = page.waitForEvent('filechooser');
+  await page.getByRole('button', { name: 'Import', exact: true }).click();
+  await (
+    await chooser
+  ).setFiles({
+    name: 'synthetic-gameplay-fixture.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ title, board })),
+  });
+  await expect(page.getByLabel('Puzzle title', { exact: true })).toHaveValue(title);
+  await page.getByRole('button', { name: 'Apply board & play', exact: true }).click();
+  await expect(page.getByRole('heading', { name: title, level: 2, exact: true })).toBeVisible();
+}
 
 export async function readNotebook(page: Page): Promise<SavedWorkspace | null> {
   return page.evaluate(

@@ -11,7 +11,7 @@ The Vercel build serves the same React application and browser solver as the Clo
 ## Available behavior
 
 - Drawing, editing, playing, shortest-path solving, replay, revisions, local autosave, JSON import/export, and the clearly labeled prepared remix work in the browser.
-- Six expeditions add water, bridges, sliding ice, collectible relics, and a lazy-loaded interactive Three.js view. Rules-version 1 boards remain compatible; the new expeditions use rules version 2.
+- Six current expeditions use rules version 3 with first-person exploration, consumable keys, protective boots, spikes, lethal water, bridges, sliding ice, and relics. The lazy-loaded Three.js scene also supports the other camera views. Existing rules-version 1 and 2 boards keep their original behavior.
 - Sharing writes a canonical immutable snapshot to private Vercel Blob storage and returns an unguessable `/s/<id>` URL. Anyone with that URL can read the snapshot through the API. It is a real server snapshot, not an encoded puzzle in the URL.
 - Live photo interpretation and natural-language generation are disabled on this deployment. The API returns `AI_DISABLED`; no fallback model or provider is called.
 
@@ -106,3 +106,30 @@ The new real snapshot is [Winter vault](https://sketchquest-beige.vercel.app/s/R
 Fresh production browser checks confirmed the default "3D world view" was selected and its live WebGL canvas was present. The coast expedition had no horizontal overflow at a 390-pixel viewport. Winter vault displayed its 3D frost theme; a real replay completed 13/13 moves, collected 3/3 relics, and reached the "Found your way" win state. No page errors occurred in these checks.
 
 Production browser evidence: [desktop 3D](design/expedition-desktop.png), [mobile coast](design/expedition-mobile.png), and [frost expedition](design/expedition-frost.png).
+
+## First-person release — 13 September 2026
+
+The reviewed first-person release is live at [sketchquest-beige.vercel.app](https://sketchquest-beige.vercel.app/). Deployment `dpl_AdRYpyBV7APMmS3PD2exgLacs1iA` reached `READY` in 29 seconds. The existing Hobby project, private Singapore Blob store, and server-side quotas were preserved; no paid service or inference provider was added.
+
+The remote build passed the strict project typecheck, Vite production build, and API transpilation. Its lazy scene chunk is 601,815 bytes (approximately 155 KB compressed); the main application is approximately 348 KB (110 KB compressed). The current expeditions use [rules version 3](first-person-rules.md), while previously saved and shared version-1/2 boards keep their historical rules independently of camera selection.
+
+| Check                           | Observed result                                                                                  |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Homepage and `/api/status`      | HTTP 200; sharing enabled, live AI disabled                                                      |
+| First-person scene module       | HTTP 200, JavaScript, 601,815 bytes                                                              |
+| Existing version-1 share        | HTTP 200; The little escape retains `rulesVersion: 1`                                            |
+| Existing version-2 share        | HTTP 200; prior Winter vault retains `rulesVersion: 2`                                           |
+| New version-3 share             | One POST returned HTTP 201; payload obtained directly from the current final `EXPEDITIONS` entry |
+| Version-3 read-back             | HTTP 200; complete 8 × 8 board and `rulesVersion: 3` matched the source exactly                  |
+| Version-3 shared page/cache     | HTTP 200; `public, max-age=86400, immutable`                                                     |
+| Runtime scan                    | No API runtime errors during the release smoke checks                                            |
+| Pre-deployment automated checks | 142 unit/integration tests in 18 files; strict typecheck; Cloudflare and Vercel builds passed    |
+| Browser regression checks       | 36 checks passed: 33 main checks and 3 sharing checks against a fresh isolated local D1 database |
+
+The current real snapshot is [Winter vault — rules version 3](https://sketchquest-beige.vercel.app/s/xTDRNnEMzWVQwam2DfzD-g). It includes a crate, ice, protective boots, spikes, lethal water, a bridge, a locked gate, and three relics. The historical [version-1 puzzle](https://sketchquest-beige.vercel.app/s/dRbY-OklZBbbxwXPocXcAg) and [version-2 Winter vault](https://sketchquest-beige.vercel.app/s/RB4ly4aZcaDtElki6hLDYQ) remain readable. The smoke check created exactly one new shared snapshot and made no model calls. Local test isolation did not change production quotas or limits.
+
+Live production browser verification used normal motion on a 1440-pixel desktop viewport. Relic grove opened in Perspective view; the player collected its key, opened the gate, and completed a real solver replay. On a 390-pixel phone viewport, walking into Tidal crossing's water produced the death state even while boots were held. Undo restored the preceding safe state and cleared the death tint. The page width remained 390 pixels with no horizontal overflow.
+
+The fresh version-3 Winter vault shared link also completed a real 25-step replay in Perspective view. Its final state showed the gate open, boots held, all three relics collected, and the win state. No page errors occurred in the desktop, phone, or fresh shared-puzzle checks. These results apply to the final production deployment `dpl_AdRYpyBV7APMmS3PD2exgLacs1iA`.
+
+Production captures: [desktop exploration](design/first-person-desktop.png), [phone exploration](design/first-person-mobile.png), [opened gate](design/first-person-gate.png), and [water death](design/first-person-death.png).

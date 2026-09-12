@@ -16,6 +16,8 @@ export interface SolveOptions {
 }
 const KEY_BIT = 1 << 24;
 const RELIC_SHIFT = 25;
+const BOOTS_BIT = 1 << 29;
+const DOOR_BIT = 1 << 30;
 
 export function encodeState(state: GameState): number {
   const crates = [...state.crates].sort((a, b) => a - b);
@@ -25,16 +27,29 @@ export function encodeState(state: GameState): number {
     ((crates[1] ?? 0) << 12) |
     ((crates[2] ?? 0) << 18) |
     (state.hasKey ? KEY_BIT : 0) |
-    ((state.collectedRelics ?? 0) << RELIC_SHIFT)
+    ((state.collectedRelics ?? 0) << RELIC_SHIFT) |
+    (state.hasBoots ? BOOTS_BIT : 0) |
+    (state.doorOpened ? DOOR_BIT : 0)
   );
 }
 
-function decodeState(encoded: number, crateCount: number, rulesVersion: 1 | 2): GameState {
+function decodeState(
+  encoded: number,
+  crateCount: number,
+  rulesVersion: BoardDefinition['rulesVersion'],
+): GameState {
   return {
     player: encoded & 63,
     crates: Array.from({ length: crateCount }, (_, index) => (encoded >> ((index + 1) * 6)) & 63),
     hasKey: Boolean(encoded & KEY_BIT),
-    ...(rulesVersion === 2 ? { collectedRelics: (encoded >> RELIC_SHIFT) & 15 } : {}),
+    ...(rulesVersion >= 2 ? { collectedRelics: (encoded >> RELIC_SHIFT) & 15 } : {}),
+    ...(rulesVersion === 3
+      ? {
+          hasBoots: Boolean(encoded & BOOTS_BIT),
+          doorOpened: Boolean(encoded & DOOR_BIT),
+          dead: false,
+        }
+      : {}),
   };
 }
 
@@ -67,7 +82,7 @@ export async function solve(
     return { status: 'solved', solution: [], moves: 0, pushes: 0, stats: stats() };
   if (maxMs === 0) return incomplete('time_budget');
   const startCode = encodeState(start);
-  // Version 2's larger theoretical state space must never allocate a dense 2^29 table.
+  // Expedition state spaces must never allocate a dense 2^31 table.
   // Store only discovered states and retain the same explicit search budgets.
   const predecessor: number[] = [-1];
   const incoming: number[] = [-1];
@@ -110,7 +125,7 @@ export async function solve(
     }
     for (let direction = 0; direction < DIRECTIONS.length; direction += 1) {
       const result = transition(board, state, DIRECTIONS[direction]);
-      if (!result.ok) continue;
+      if (!result.ok || result.state.dead) continue;
       const next = encodeState(result.state);
       if (visited.has(next)) continue;
       if (tail >= maxStates) return incomplete('state_budget');

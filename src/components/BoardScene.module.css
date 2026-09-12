@@ -27,6 +27,37 @@
   height: 100%;
 }
 
+.firstPerson {
+  aspect-ratio: 16 / 10;
+  max-height: 520px;
+  min-height: 350px;
+  background: #bdd4d3;
+}
+.firstPerson::after {
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 90px #0d26312e;
+}
+.deathVeil,
+.escapeVeil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.deathVeil {
+  background: radial-gradient(ellipse at center, #10293466, #05131eee);
+  opacity: var(--death-opacity, 0);
+}
+.scene[data-death-cause='spikes'] .deathVeil {
+  background: radial-gradient(ellipse at center, #643d2d44, #28131de8);
+}
+.escapeVeil {
+  background: radial-gradient(ellipse at 50% 45%, #fff4bada, #f9ce7155);
+  opacity: var(--escape-opacity, 0);
+}
+
 .coast {
   background: radial-gradient(ellipse at 42% 38%, #4b8c8b 0%, #2f666d 46%, #173d4d 100%);
 }
@@ -43,5 +74,10 @@
   }
   .scene::after {
     inset: 8px;
+  }
+  .firstPerson {
+    aspect-ratio: 1;
+    min-height: 350px;
+    max-height: 440px;
   }
 }

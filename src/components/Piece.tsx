@@ -21,7 +21,7 @@ export function Piece({
   unlocked?: boolean;
 }) {
   if (kind === 'floor') return <span className={s.floor} aria-hidden="true" />;
-  if (['water', 'bridge', 'ice', 'relic'].includes(kind))
+  if (['water', 'bridge', 'ice', 'relic', 'spikes', 'boots'].includes(kind))
     return (
       <span className={`${s.material} ${s[kind]}`} aria-hidden="true">
         <i />

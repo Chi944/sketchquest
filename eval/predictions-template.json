@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "run": {
+    "provider": "UNRECORDED",
+    "model": "UNRECORDED",
+    "promptVersion": "UNRECORDED",
+    "provenance": "Empty template. No model calls or measurements have been recorded."
+  },
+  "records": []
+}

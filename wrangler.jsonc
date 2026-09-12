@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sketchquest",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-12",
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"],
+  },
+  "vars": {
+    "FREE_PLAN_CONFIRMED": "false",
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "sketchquest",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
+  // AI is intentionally absent. Local dev must not contact paid or live services.
+  // After confirming Workers Free and completing the model license setup, add:
+  // "ai": { "binding": "AI" },
+  // then set FREE_PLAN_CONFIRMED=true and configure QUOTA_SECRET (see docs/api.md).
+  "observability": { "enabled": false },
+}

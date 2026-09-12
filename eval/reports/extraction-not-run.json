@@ -1,0 +1,439 @@
+{
+  "evaluationVersion": 1,
+  "dataset": "SketchQuest synthetic authored vector corpus",
+  "status": "not_run",
+  "declaredRun": null,
+  "evidence": "Offline scoring only. No model calls are made. Imported output provenance is supplied by the caller, not independently verified by this harness.",
+  "metricNotes": [
+    "Wrong dimensions yield zero correct cells and zero symbol recall for that sample.",
+    "Cell accuracy requires both terrain and occupant to match. Non-floor recall counts walls, player, crates, key, door, and exit separately.",
+    "Critical misses are expected player/crate/key/door/exit symbols absent or misplaced at their annotated cell; walls are tracked by symbol recall.",
+    "Uncertain but correct cells receive credit. Exact-board accuracy scores the grid independently of the model status label.",
+    "Correction actions are observed user actions only when supplied; mismatched cell count is not presented as observed correction effort.",
+    "Unknown measurements remain null with reportedCount:0. Unmeasured samples do not enter accuracy denominators; failed recorded outputs do.",
+    "p50/p95 use nearest-rank percentiles over supplied measurements. Synthetic sketches cannot establish real handwriting/photo accuracy."
+  ],
+  "overall": {
+    "availableSamples": 30,
+    "recordedSamples": 0,
+    "unmeasuredSamples": 30,
+    "boardSamples": 0,
+    "rejectionSamples": 0,
+    "outputErrors": 0,
+    "cellAccuracy": {
+      "correct": 0,
+      "total": 0,
+      "rate": null
+    },
+    "exactBoardAccuracy": {
+      "correct": 0,
+      "total": 0,
+      "rate": null
+    },
+    "nonFloorSymbolRecall": {
+      "correct": 0,
+      "total": 0,
+      "rate": null
+    },
+    "perSymbolRecall": {
+      "wall": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "player": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "crate": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "key": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "door": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "exit": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      }
+    },
+    "missedCriticalSymbols": 0,
+    "rejectionRate": {
+      "correct": 0,
+      "total": 0,
+      "rate": null
+    },
+    "correctionActions": {
+      "reportedCount": 0,
+      "total": null,
+      "mean": null,
+      "p50": null,
+      "p95": null
+    },
+    "measurements": {
+      "latencyMs": {
+        "reportedCount": 0,
+        "total": null,
+        "mean": null,
+        "p50": null,
+        "p95": null
+      },
+      "inputTokens": {
+        "reportedCount": 0,
+        "total": null,
+        "mean": null,
+        "p50": null,
+        "p95": null
+      },
+      "outputTokens": {
+        "reportedCount": 0,
+        "total": null,
+        "mean": null,
+        "p50": null,
+        "p95": null
+      },
+      "neurons": {
+        "reportedCount": 0,
+        "total": null,
+        "mean": null,
+        "p50": null,
+        "p95": null
+      },
+      "costUsd": {
+        "reportedCount": 0,
+        "total": null,
+        "mean": null,
+        "p50": null,
+        "p95": null
+      }
+    }
+  },
+  "splits": {
+    "dev": {
+      "availableSamples": 12,
+      "recordedSamples": 0,
+      "unmeasuredSamples": 12,
+      "boardSamples": 0,
+      "rejectionSamples": 0,
+      "outputErrors": 0,
+      "cellAccuracy": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "exactBoardAccuracy": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "nonFloorSymbolRecall": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "perSymbolRecall": {
+        "wall": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "player": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "crate": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "key": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "door": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "exit": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        }
+      },
+      "missedCriticalSymbols": 0,
+      "rejectionRate": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "correctionActions": {
+        "reportedCount": 0,
+        "total": null,
+        "mean": null,
+        "p50": null,
+        "p95": null
+      },
+      "measurements": {
+        "latencyMs": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "inputTokens": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "outputTokens": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "neurons": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "costUsd": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        }
+      }
+    },
+    "heldout": {
+      "availableSamples": 12,
+      "recordedSamples": 0,
+      "unmeasuredSamples": 12,
+      "boardSamples": 0,
+      "rejectionSamples": 0,
+      "outputErrors": 0,
+      "cellAccuracy": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "exactBoardAccuracy": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "nonFloorSymbolRecall": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "perSymbolRecall": {
+        "wall": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "player": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "crate": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "key": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "door": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "exit": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        }
+      },
+      "missedCriticalSymbols": 0,
+      "rejectionRate": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "correctionActions": {
+        "reportedCount": 0,
+        "total": null,
+        "mean": null,
+        "p50": null,
+        "p95": null
+      },
+      "measurements": {
+        "latencyMs": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "inputTokens": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "outputTokens": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "neurons": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "costUsd": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        }
+      }
+    },
+    "rejection": {
+      "availableSamples": 6,
+      "recordedSamples": 0,
+      "unmeasuredSamples": 6,
+      "boardSamples": 0,
+      "rejectionSamples": 0,
+      "outputErrors": 0,
+      "cellAccuracy": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "exactBoardAccuracy": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "nonFloorSymbolRecall": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "perSymbolRecall": {
+        "wall": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "player": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "crate": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "key": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "door": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        },
+        "exit": {
+          "correct": 0,
+          "total": 0,
+          "rate": null
+        }
+      },
+      "missedCriticalSymbols": 0,
+      "rejectionRate": {
+        "correct": 0,
+        "total": 0,
+        "rate": null
+      },
+      "correctionActions": {
+        "reportedCount": 0,
+        "total": null,
+        "mean": null,
+        "p50": null,
+        "p95": null
+      },
+      "measurements": {
+        "latencyMs": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "inputTokens": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "outputTokens": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "neurons": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        },
+        "costUsd": {
+          "reportedCount": 0,
+          "total": null,
+          "mean": null,
+          "p50": null,
+          "p95": null
+        }
+      }
+    }
+  },
+  "samples": []
+}

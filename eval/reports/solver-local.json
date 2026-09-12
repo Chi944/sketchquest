@@ -1,0 +1,147 @@
+{
+  "evaluationVersion": 1,
+  "engine": "breadth-first search, complete state, move-optimal",
+  "runtime": "v24.19.0",
+  "platform": "win32",
+  "architecture": "x64",
+  "budgets": {
+    "maxStates": 250000,
+    "maxMs": 5000
+  },
+  "caveat": "Runtime varies by machine; these are authored fixtures, not a representative performance distribution.",
+  "results": [
+    {
+      "id": "little-escape",
+      "width": 6,
+      "height": 6,
+      "crates": 1,
+      "status": "solved",
+      "solution": ["right", "right", "right", "down", "down", "down"],
+      "moves": 6,
+      "pushes": 0,
+      "stats": {
+        "explored": 28,
+        "elapsedMs": 1.469300000000004
+      },
+      "replayVerified": true
+    },
+    {
+      "id": "key-under-cover",
+      "width": 6,
+      "height": 6,
+      "crates": 1,
+      "status": "solved",
+      "solution": ["right", "right", "down", "down"],
+      "moves": 4,
+      "pushes": 2,
+      "stats": {
+        "explored": 7,
+        "elapsedMs": 1.0483000000000118
+      },
+      "replayVerified": true
+    },
+    {
+      "id": "two-company",
+      "width": 7,
+      "height": 7,
+      "crates": 2,
+      "status": "solved",
+      "solution": ["right", "right", "down", "down", "down", "right", "up", "right", "up", "up"],
+      "moves": 10,
+      "pushes": 0,
+      "stats": {
+        "explored": 653,
+        "elapsedMs": 2.353100000000012
+      },
+      "replayVerified": true
+    },
+    {
+      "id": "prepared-longer-route",
+      "width": 6,
+      "height": 6,
+      "crates": 1,
+      "status": "solved",
+      "solution": [
+        "right",
+        "right",
+        "left",
+        "down",
+        "left",
+        "down",
+        "right",
+        "right",
+        "down",
+        "right"
+      ],
+      "moves": 10,
+      "pushes": 3,
+      "stats": {
+        "explored": 55,
+        "elapsedMs": 1.2582000000000164
+      },
+      "replayVerified": true
+    },
+    {
+      "id": "disconnected-exit",
+      "width": 4,
+      "height": 4,
+      "crates": 0,
+      "status": "unsolvable",
+      "stats": {
+        "explored": 8,
+        "elapsedMs": 1.2136999999999887
+      },
+      "replayVerified": null
+    },
+    {
+      "id": "open-eight-by-eight",
+      "width": 8,
+      "height": 8,
+      "crates": 2,
+      "status": "solved",
+      "solution": [
+        "right",
+        "right",
+        "right",
+        "right",
+        "right",
+        "down",
+        "down",
+        "down",
+        "down",
+        "down"
+      ],
+      "moves": 10,
+      "pushes": 0,
+      "stats": {
+        "explored": 1091,
+        "elapsedMs": 4.1995000000000005
+      },
+      "replayVerified": true
+    },
+    {
+      "id": "crate-blocked-corridor",
+      "width": 4,
+      "height": 4,
+      "crates": 1,
+      "status": "unsolvable",
+      "stats": {
+        "explored": 1,
+        "elapsedMs": 0.9932000000000016
+      },
+      "replayVerified": null
+    },
+    {
+      "id": "open-room-isolated-exit",
+      "width": 8,
+      "height": 8,
+      "crates": 2,
+      "status": "unsolvable",
+      "stats": {
+        "explored": 214157,
+        "elapsedMs": 72.48070000000001
+      },
+      "replayVerified": null
+    }
+  ]
+}

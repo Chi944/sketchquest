@@ -1,0 +1,42 @@
+# Design source notes
+
+## Design with Intent: verified identity and provenance
+
+The user requested “designwithintent” alongside Impeccable. The strongest contextual match is **Design with Intent by Ghaida Zahran**, the UX strategy skill suite at [designwithintent.ai](https://designwithintent.ai/). Its official website links to [ghaida/intent on GitHub](https://github.com/ghaida/intent). The site describes 17 skills spanning research, flows, content, accessibility, ethics, measurement, and handoff; this fits a request to combine intentional UX with visual refinement.
+
+There is also an older, separate Design with Intent behavior-design toolkit associated with Dan Lockton. This project's interpretation of the user's request is the contemporary AI skill suite, based on the naming and pairing with Impeccable. No installation was performed and no downloaded code or installer was executed.
+
+Public source instructions were inspected read-only on 2026-09-13. The repository's observed `main` commit was `b89a519eb570fe7ec61de1eb51f553af0306b515` (commit date 2026-07-17). References below are pinned to that commit. The repository publishes its instructions under [CC0 1.0 Universal](https://github.com/ghaida/intent/blob/b89a519eb570fe7ec61de1eb51f553af0306b515/LICENSE). This document paraphrases the relevant guidance and records project-specific application; it does not vendor the entire skill suite.
+
+## Relevant official guidance
+
+- **Intent foundation:** Establish users, their goal, product context, constraints, and success criteria. State missing evidence as an assumption. For an existing experience, inspect it, prioritize concrete failures, fix the relevant domain, and verify. Preserve user autonomy, reversible actions, comprehensible state, and recovery. The system explicitly distinguishes UX reasoning from visual component styling and allows a focused response to an already-specific brief. [Intent source](https://github.com/ghaida/intent/blob/b89a519eb570fe7ec61de1eb51f553af0306b515/skills/intent/SKILL.md).
+- **Evaluate:** Walk the core task step by step: can someone recognize the goal, find the next action, predict its effect, and see progress after acting? Document each finding with its location, impact, evidence, priority, and repair. Separate observed behavior from predictions, and preserve successful interaction patterns during a redesign. [Evaluate source](https://github.com/ghaida/intent/blob/b89a519eb570fe7ec61de1eb51f553af0306b515/skills/evaluate/SKILL.md).
+- **Fortify:** Consider default, empty, loading, partial, error, success, offline, disabled, and overflow states. Provide contextual recovery, keep drafts, avoid silently clearing input, explain unavailable actions, and show value before requiring setup. Stress-test waiting, narrow screens, interruption, repeated actions, and extreme content. [Fortify source](https://github.com/ghaida/intent/blob/b89a519eb570fe7ec61de1eb51f553af0306b515/skills/fortify/SKILL.md).
+- **Include:** Use semantic controls, meaningful labels, predictable keyboard behavior, visible focus, logical reading order, non-color status cues, and restrained live announcements. Provide alternatives to precise gestures and respect reduced motion. Test keyboard operation, zoom/reflow, actual contrast, and assistive technology; an automated scan alone is not evidence of complete accessibility. [Include source](https://github.com/ghaida/intent/blob/b89a519eb570fe7ec61de1eb51f553af0306b515/skills/include/SKILL.md).
+
+The sources include broader research and policy claims. Those claims are not being copied into SketchQuest marketing or treated as measured facts about this application. The recommendations below come from the user's brief and these design methods; they are not findings from user interviews.
+
+## Applying the guidance to SketchQuest
+
+**Context already established:** A person wants to turn a small drawn puzzle into a game, correct it, try a natural-language change, inspect verification, then replay/share. The first release is a portfolio demonstration with a 1–2 week scope, private original images, local editing, no required accounts, deterministic rules, and bounded model work. The assumed audience is a curious first-time visitor using either a laptop or a phone. No direct audience research has yet validated that assumption.
+
+1. **Make the board the point of entry.** Let the first visible experience demonstrate the actual puzzle and its controls. Keep explanatory copy short enough that a large marketing hero does not displace the activity the visitor came to try. Generated design imagery can establish visual direction; the playable grid must remain real accessible interface elements.
+2. **Keep ownership of the board clear.** Label whether the visitor is viewing an example, a draft interpretation, the accepted revision, or a proposed change. Keep that state near the grid. The visitor should never have to infer whether an AI result has replaced their work.
+3. **Make the next action legible.** Use a visible text label for the current primary action and explain its consequence. Editing, accepting, starting a fresh session, and sharing have different effects and should not collapse into vague “Continue” buttons. Keep secondary actions available without giving every toolbar item equal prominence.
+4. **Turn comparison into a visible explanation.** Pair changed-cell markers with a text count and a shortest-solution comparison when both boards were solved. The prepared demonstration is labeled as prepared; a verification result does not claim live AI authorship. Use shapes/outlines or labels alongside color so differences remain understandable without color perception.
+5. **Keep failure recoverable.** Model unavailability should lead naturally to manual editing or the prepared example. Preserve the photograph preview and draft during correction. Solver cancellation, time/state limits, invalid grids, and true exhaustive unsolvability need distinct messages and a relevant next step. Do not substitute decorative success imagery for an actual verified result.
+6. **Fit the task to the device.** On narrow screens, keep the board readable and place the current controls close to it; a desktop sidebar should not merely shrink. Use generous primary-action and movement targets. Maintain keyboard focus visibility, labels for symbol tools, scoped shortcuts that do not intercept text entry, and an accessible description of grid cells and selected tools.
+7. **Use polish to reinforce meaning.** A restrained paper/drawing motif can connect the original sketch with the playable board. Type hierarchy, spacing, color, and motion should make current state and available actions easier to recognize. Motion must remain optional, and decorative assets should not compete with the grid or imply functionality the app does not have.
+
+## Focused verification targets
+
+The visual refinement should be judged against observed desktop and mobile states: initial example, editing with a selected symbol, interpretation uncertainty, proposed diff and solver result, active replay, won board, and a recoverable unavailable/error state. Check the core sequence with keyboard and touch-sized controls, visible focus, narrow-screen reflow, and reduced motion. Record screenshots and concrete issues rather than inventing a numeric UX score without a defined assessment.
+
+Success for this pass means the core task remains understandable while the implementation matches the chosen visual reference's hierarchy, spacing, typography, colors, and component states. Pixel alignment is evaluated at explicit viewports; responsive behavior must still adapt to content and device size.
+
+## Impeccable polish
+
+Applied the public Impeccable instructions from [pbakaus/impeccable](https://github.com/pbakaus/impeccable), including its polish and craft-floor references. The official CLI `npx impeccable context --target src/App.tsx` ran successfully. It recognized the incumbent interface and allowed scoped refinement. The supplied user brief provided product context; `PRODUCT.md` and `DESIGN.md` record it without claiming user research.
+
+The pass prioritizes functional recovery and state clarity, then responsive hierarchy, contrast, typography, controls, and cleanup. A final mechanical detector run is supporting evidence alongside real browser interaction and desktop/mobile captures. A clean detector result alone is not a quality claim.

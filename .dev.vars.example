@@ -1,0 +1,5 @@
+# Copy to .dev.vars only when intentionally testing live AI on a confirmed Free plan.
+# Local sharing needs no secret; it uses a localhost-only development key.
+FREE_PLAN_CONFIRMED="false"
+# Production requires an independent random secret of at least 32 characters.
+# QUOTA_SECRET="replace-with-a-random-secret-at-least-32-characters"

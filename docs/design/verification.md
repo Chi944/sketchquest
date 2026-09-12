@@ -1,6 +1,10 @@
 # Visual verification
 
-## Current photoreal implementation — 13 September 2026
+## Current expedition release
+
+The richer game-site design, Three.js animation and six new expeditions supersede the earlier still-image design below. See [expedition verification](expedition-verification.md) for the current 117 unit/integration tests, 30 browser tests, scene performance evidence, and production captures.
+
+## Historical photoreal implementation — 13 September 2026
 
 The user's review superseded the notebook direction below. The shipped design uses a generated forest-ruin hero, realistic explorer and prop sprites, Fraunces display typography, warm ivory surfaces, and forest-green controls. [Exact prompts and original production images](photoreal-generation.md) are preserved alongside the implementation captures.
 

@@ -36,6 +36,23 @@ const review = (): DraftReview => ({
 });
 
 describe('untrusted saved workspace validation', () => {
+  it('preserves expedition rules in saved revisions, editable drafts and parked drafts', () => {
+    const value = workspace();
+    const expedition = { ...board(), rulesVersion: 2 as const };
+    expedition.terrain[4] = 'water';
+    expedition.terrain[8] = 'bridge';
+    expedition.terrain[6] = 'ice';
+    expedition.terrain[9] = 'relic';
+    value.revisions[0].board = expedition;
+    value.draft = { ...expedition, player: -1 };
+    value.parkedDrafts = [
+      { baseRevisionId: 'revision-1', board: value.draft, title: 'An icy draft', review: null },
+    ];
+    const restored = validateWorkspace(value);
+    expect(restored.revisions[0].board).toEqual(expedition);
+    expect(restored.draft).toEqual(value.draft);
+    expect(restored.parkedDrafts?.[0].board.rulesVersion).toBe(2);
+  });
   it('copies only supported fields while preserving revision and play history', () => {
     const value = workspace();
     const result = validateWorkspace({ ...value, extra: 'discard me' });

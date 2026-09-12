@@ -73,7 +73,7 @@ function readDraft(value: unknown): BoardDefinition {
   if (
     !isRecord(value) ||
     value.schemaVersion !== 1 ||
-    value.rulesVersion !== 1 ||
+    ![1, 2].includes(value.rulesVersion as number) ||
     !safeInteger(value.width, 4, 8) ||
     !safeInteger(value.height, 4, 8)
   )
@@ -91,7 +91,7 @@ function readDraft(value: unknown): BoardDefinition {
     return damage('draft');
   return {
     schemaVersion: 1,
-    rulesVersion: 1,
+    rulesVersion: value.rulesVersion as 1 | 2,
     width: value.width,
     height: value.height,
     terrain: [...value.terrain],

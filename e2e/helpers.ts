@@ -32,6 +32,8 @@ export async function openApp(page: Page, aiEnabled = false) {
     }),
   );
   await page.goto('/');
+  // Legacy gameplay tests use the visible editing grid; expedition tests exercise 3D separately.
+  await page.getByRole('button', { name: '2D grid view', exact: true }).click();
   await expect(
     page.getByRole('group', { name: 'Current puzzle board', exact: true }),
   ).toBeVisible();

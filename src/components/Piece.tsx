@@ -21,7 +21,14 @@ export function Piece({
   unlocked?: boolean;
 }) {
   if (kind === 'floor') return <span className={s.floor} aria-hidden="true" />;
-  const [x, y] = positions[kind];
+  if (['water', 'bridge', 'ice', 'relic'].includes(kind))
+    return (
+      <span className={`${s.material} ${s[kind]}`} aria-hidden="true">
+        <i />
+        <b />
+      </span>
+    );
+  const [x, y] = positions[kind as keyof typeof positions];
   return (
     <span
       className={`${s.piece} ${kind === 'player' ? s.player : ''}`}

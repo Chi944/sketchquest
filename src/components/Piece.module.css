@@ -10,6 +10,64 @@
   pointer-events: none;
   filter: drop-shadow(0 2px 1px #272b2422);
 }
+.material {
+  position: absolute;
+  inset: 5%;
+  display: block;
+  pointer-events: none;
+}
+.water {
+  inset: 1%;
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(166deg, transparent 0 12%, #95d9df70 13% 15%, transparent 16% 30%),
+    linear-gradient(145deg, #80c9cd, #276d88);
+  box-shadow: inset 0 2px 5px #123e5055;
+}
+.bridge {
+  inset: 7% 1%;
+  border-radius: 2px;
+  background: repeating-linear-gradient(90deg, #382d1b 0 2%, #b68c51 2% 16%, #d1ad72 16% 20%);
+  box-shadow: 0 4px 3px #1b313866;
+  transform: rotate(-4deg);
+}
+.bridge::before,
+.bridge::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8%;
+  background: #655135;
+  box-shadow: 0 2px 1px #c6a76b77;
+}
+.bridge::before {
+  top: 3%;
+}
+.bridge::after {
+  bottom: 3%;
+}
+.ice {
+  inset: 3%;
+  clip-path: polygon(9% 0, 90% 3%, 100% 80%, 91% 100%, 0 91%, 2% 17%);
+  background:
+    linear-gradient(35deg, transparent 43%, #e5faff 44% 46%, transparent 47%),
+    linear-gradient(140deg, #e5faff, #80c5df 42%, #d9f3ff 44%, #98c9df);
+  box-shadow: inset 0 3px 1px #fff;
+}
+.relic {
+  inset: 18% 22%;
+  background: conic-gradient(from 30deg, #c6f5cd, #259e93, #a9ebd8, #25837b, #e5f9bb);
+  clip-path: polygon(50% 0, 95% 30%, 90% 73%, 50% 100%, 5% 72%, 0 30%);
+  filter: drop-shadow(0 3px 2px #734f3970);
+}
+.relic i {
+  position: absolute;
+  inset: 25%;
+  background: #52b9a6;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  box-shadow: 0 0 8px #ffd9a5;
+}
 .floor {
   display: block;
   width: 100%;

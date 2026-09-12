@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { TERRAINS } from '../src/core/types.js';
 
 export const MIN_GRID = 4;
 export const MAX_GRID = 8;
 export const gridSize = z.number().int().min(MIN_GRID).max(MAX_GRID);
-const terrain = z.enum(['floor', 'wall', 'key', 'door', 'exit']);
+const terrain = z.enum(TERRAINS);
 const occupant = z.enum(['none', 'player', 'crate']);
 export const cellEdit = z
   .object({

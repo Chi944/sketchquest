@@ -19,10 +19,12 @@ import {
   ChevronDown,
   ChevronRight,
   CircleHelp,
+  Compass,
   Copy,
   Download,
   Eraser,
   Flag,
+  Gem,
   FolderOpen,
   History,
   Keyboard,
@@ -37,15 +39,19 @@ import {
   RotateCcw,
   Share2,
   ShieldCheck,
+  Snowflake,
   SkipBack,
   SkipForward,
   Undo2,
   Upload,
+  Trees,
+  Waves,
   WandSparkles,
   X,
 } from 'lucide-react';
 import { Board } from './components/Board';
 import { Piece } from './components/Piece';
+import { ExpeditionTrail } from './components/ExpeditionTrail';
 import {
   applyCellEdits,
   boardHash,
@@ -56,8 +62,15 @@ import {
   resizeBoard,
   validateBoard,
 } from './core/board';
-import { DEMO_LONGER_EDITS, EXAMPLES } from './core/examples';
-import { initialState, isWon, replay, transition } from './core/rules';
+import { DEMO_LONGER_EDITS, EXAMPLES, EXPEDITIONS } from './core/examples';
+import {
+  collectedRelicCount,
+  initialState,
+  isWon,
+  relicCells,
+  replay,
+  transition,
+} from './core/rules';
 import type {
   BoardDefinition,
   Direction,
@@ -98,6 +111,10 @@ const TOOL_INFO: Array<{ tool: Tool; label: string; shortcut: string }> = [
   { tool: 'exit', label: 'Exit', shortcut: '6' },
   { tool: 'erase', label: 'Erase', shortcut: '7' },
   { tool: 'floor', label: 'Floor', shortcut: '8' },
+  { tool: 'water', label: 'Water', shortcut: '9' },
+  { tool: 'bridge', label: 'Bridge', shortcut: '0' },
+  { tool: 'ice', label: 'Ice', shortcut: 'i' },
+  { tool: 'relic', label: 'Relic', shortcut: 'r' },
 ];
 
 function revisionFor(
@@ -236,6 +253,16 @@ export default function App() {
   const gameState = mode === 'play' ? (replayRun?.state ?? ownRun.state) : undefined;
   const won = mode === 'play' && isWon(board, gameState ?? initialState(board));
   const differences = showingDraft ? changedCells(active.board, board) : [];
+  const expedition = EXPEDITIONS.find((quest) => boardHash(quest.board) === activeHash);
+  const world =
+    expedition?.theme ??
+    (board.terrain.includes('ice')
+      ? 'frost'
+      : board.terrain.includes('water')
+        ? 'coast'
+        : 'forest');
+  const totalRelics = relicCells(board).length;
+  const foundRelics = gameState ? collectedRelicCount(board, gameState) : 0;
 
   const invalidateAI = useCallback(() => {
     operationVersion.current++;
@@ -450,7 +477,13 @@ export default function App() {
       setNotice(outcome.reason);
       return;
     }
-    setNotice(outcome.won ? 'You found the way out. Nicely explored!' : '');
+    setNotice(
+      outcome.won
+        ? 'You found the way out. Nicely explored!'
+        : active.board.terrain[outcome.state.player] === 'exit' && totalRelics > foundRelics
+          ? 'A few relics are still out there. Collect them all, then return to the arch.'
+          : '',
+    );
     const moves = [...session.moves.slice(0, session.cursor), direction];
     setSession({ revisionId: active.id, moves, cursor: moves.length });
   }
@@ -634,8 +667,10 @@ export default function App() {
     setNotice('Back to your current puzzle.');
   }
   function chooseExample(index: number) {
+    choosePuzzle(EXAMPLES[index]);
+  }
+  function choosePuzzle(example: { board: BoardDefinition; title: string; description: string }) {
     parkCurrentDraft();
-    const example = EXAMPLES[index];
     const next = revisionFor(example.board, example.title, 'example', active.id);
     invalidateAI();
     setRevisions((value) => [...value, next]);
@@ -648,6 +683,12 @@ export default function App() {
     setPlayback(null);
     setModal(null);
     setNotice(example.description);
+    requestAnimationFrame(() =>
+      document.getElementById('playground')?.scrollIntoView({
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+        block: 'start',
+      }),
+    );
   }
   function restoreRevision(revision: Revision) {
     parkCurrentDraft();
@@ -755,7 +796,11 @@ export default function App() {
     }
     const next: BoardDefinition = {
       schemaVersion: 1,
-      rulesVersion: 1,
+      rulesVersion: interpretation.cells.some((cell) =>
+        ['water', 'bridge', 'ice', 'relic'].includes(cell.terrain),
+      )
+        ? 2
+        : 1,
       width: interpretation.width,
       height: interpretation.height,
       terrain: Array(interpretation.width * interpretation.height).fill('floor'),
@@ -1050,7 +1095,7 @@ export default function App() {
     );
 
   return (
-    <div className={s.app}>
+    <div className={s.app} data-world={world}>
       <header className={s.header}>
         <a className={s.brand} href="/" aria-label="SketchQuest home">
           <span className={s.brandMark}>
@@ -1066,6 +1111,12 @@ export default function App() {
             <span />
             Free to make. Free to play.
           </span>
+          {!sharedView && (
+            <a className={s.expeditionLink} href="#expeditions">
+              <Compass size={17} />
+              Expeditions
+            </a>
+          )}
           <button className={s.textButton} onClick={() => setModal('help')}>
             <CircleHelp size={17} />
             How to play
@@ -1095,14 +1146,33 @@ export default function App() {
                 <br />
                 <span>Big adventures.</span>
               </h1>
-              <p>Draw a puzzle. Find your way out. Then ask “what if?”</p>
-              <button className={s.uploadButton} onClick={() => setModal('photo')}>
-                <Camera size={21} />
-                <span>
-                  Start with a sketch<small>Upload or take a photo</small>
-                </span>
-                <ArrowUp className={s.uploadArrow} size={18} />
-              </button>
+              <p>
+                A world to get lost in. A path only you can find.
+                <br />
+                Play, build, and dream up your next adventure.
+              </p>
+              <div className={s.heroActions}>
+                <button className={s.uploadButton} onClick={() => setModal('photo')}>
+                  <Camera size={21} />
+                  <span>
+                    Start with a sketch<small>Upload or take a photo</small>
+                  </span>
+                  <ArrowUp className={s.uploadArrow} size={18} />
+                </button>
+                <a className={s.exploreButton} href="#expeditions">
+                  <Compass size={18} />
+                  Explore expeditions
+                </a>
+              </div>
+            </div>
+            <div className={s.heroNote}>
+              <span className={s.heroCompass}>
+                <Compass size={31} strokeWidth={1.2} />
+              </span>
+              <div>
+                <strong>The wilds are waiting.</strong>
+                <span>Six new quests to explore</span>
+              </div>
             </div>
           </section>
         ) : (
@@ -1133,765 +1203,847 @@ export default function App() {
             </a>
           </div>
         ) : (
-          <div className={`${s.workbench} ${sharedView ? s.sharedWorkbench : ''}`}>
-            <section className={s.paper} aria-label="Puzzle workbench">
-              <div className={s.paperTop}>
-                <div
-                  className={s.tabs}
-                  role="tablist"
-                  aria-label="Puzzle mode"
-                  onKeyDown={navigateModeTabs}
-                >
-                  {(sharedView ? ['play'] : (['play', 'draw', 'remix'] as Mode[])).map((value) => {
-                    const item = value as Mode;
-                    const Icon = item === 'play' ? Play : item === 'draw' ? Pencil : WandSparkles;
+          <>
+            {!sharedView && (
+              <nav className={s.worldNav} aria-label="Choose a puzzle world">
+                <div>
+                  <Compass size={20} />
+                  <strong>Choose your path</strong>
+                </div>
+                <div className={s.worldButtons}>
+                  <button
+                    onClick={() => chooseExample(0)}
+                    aria-pressed={!expedition && activeHash === boardHash(EXAMPLES[0].board)}
+                  >
+                    <Pencil size={16} />
+                    First steps
+                  </button>
+                  {(['forest', 'coast', 'frost'] as const).map((theme) => {
+                    const Icon = theme === 'forest' ? Trees : theme === 'coast' ? Waves : Snowflake;
                     return (
                       <button
-                        key={item}
-                        id={`mode-tab-${item}`}
-                        role="tab"
-                        aria-selected={mode === item}
-                        aria-controls="puzzle-mode-panel"
-                        tabIndex={mode === item ? 0 : -1}
-                        onClick={() => switchMode(item)}
-                        className={mode === item ? s.activeTab : ''}
+                        key={theme}
+                        onClick={() =>
+                          choosePuzzle(EXPEDITIONS.find((quest) => quest.theme === theme)!)
+                        }
+                        aria-pressed={expedition?.theme === theme}
                       >
-                        <Icon size={16} />
-                        {item === 'play' ? 'Play' : item === 'draw' ? 'Draw' : 'Remix'}
-                        {item === 'draw' && draft && <i />}
+                        <Icon size={17} />
+                        {theme === 'forest'
+                          ? 'Forest ruins'
+                          : theme === 'coast'
+                            ? 'Sunken coast'
+                            : 'Frozen passage'}
                       </button>
                     );
                   })}
                 </div>
-                <button
-                  className={s.iconButton}
-                  onClick={() => setModal('help')}
-                  aria-label="Puzzle rules"
-                >
-                  <CircleHelp size={18} />
-                </button>
-              </div>
-              <div
-                id="puzzle-mode-panel"
-                role="tabpanel"
-                aria-labelledby={`mode-tab-${mode}`}
-                tabIndex={0}
-              >
-                <div className={s.boardHeading}>
-                  <div>
-                    <div className={s.boardHeadingLine}>
-                      {showingDraft ? (
-                        <>
-                          <h2 className="sr-only">
-                            Edit puzzle: {draftTitle || 'Untitled adventure'}
-                          </h2>
-                          <input
-                            className={s.titleInput}
-                            aria-label="Puzzle title"
-                            value={draftTitle}
-                            maxLength={80}
-                            onChange={(e) => {
-                              invalidateAI();
-                              setDraftTitle(e.target.value);
-                            }}
-                          />
-                        </>
-                      ) : (
-                        <h2>{active.title}</h2>
-                      )}
-                      <span className={showingDraft ? s.proposedPill : s.currentPill}>
-                        {showingDraft ? (review ? 'Proposed' : 'Draft') : 'Current'}
-                      </span>
-                    </div>
-                    <p>
-                      {board.width} × {board.height} grid<span>·</span>
-                      {showingDraft ? 'Make it your own' : 'A small puzzle with a way through'}
-                    </p>
+                <a href="#expeditions">
+                  All quests <ArrowRight size={15} />
+                </a>
+              </nav>
+            )}
+            <div
+              id="playground"
+              className={`${s.workbench} ${sharedView ? s.sharedWorkbench : ''}`}
+            >
+              <section className={s.paper} aria-label="Puzzle workbench">
+                <div className={s.paperTop}>
+                  <div
+                    className={s.tabs}
+                    role="tablist"
+                    aria-label="Puzzle mode"
+                    onKeyDown={navigateModeTabs}
+                  >
+                    {(sharedView ? ['play'] : (['play', 'draw', 'remix'] as Mode[])).map(
+                      (value) => {
+                        const item = value as Mode;
+                        const Icon =
+                          item === 'play' ? Play : item === 'draw' ? Pencil : WandSparkles;
+                        return (
+                          <button
+                            key={item}
+                            id={`mode-tab-${item}`}
+                            role="tab"
+                            aria-selected={mode === item}
+                            aria-controls="puzzle-mode-panel"
+                            tabIndex={mode === item ? 0 : -1}
+                            onClick={() => switchMode(item)}
+                            className={mode === item ? s.activeTab : ''}
+                          >
+                            <Icon size={16} />
+                            {item === 'play' ? 'Play' : item === 'draw' ? 'Draw' : 'Remix'}
+                            {item === 'draw' && draft && <i />}
+                          </button>
+                        );
+                      },
+                    )}
                   </div>
-                  {mode === 'play' && (
-                    <div className={s.counters}>
-                      <div>
-                        <strong>{movesCount}</strong>
-                        <span>moves</span>
-                      </div>
-                      <div>
-                        <strong>{pushesCount}</strong>
-                        <span>pushes</span>
-                      </div>
-                    </div>
-                  )}
+                  <button
+                    className={s.iconButton}
+                    onClick={() => setModal('help')}
+                    aria-label="Puzzle rules"
+                  >
+                    <CircleHelp size={18} />
+                  </button>
                 </div>
-                <div className={s.boardArea}>
-                  {sharedLoading ? (
-                    <div className={s.loadingBoard}>
-                      <LoaderCircle className={s.spin} />
-                      <p>Opening your adventure…</p>
-                    </div>
-                  ) : (
-                    <Board
-                      board={board}
-                      state={gameState}
-                      editable={mode !== 'play'}
-                      changes={differences}
-                      uncertain={showingDraft ? review?.uncertain : []}
-                      extraPlayers={showingDraft ? review?.extraPlayers : []}
-                      selected={selectedCells}
-                      onCell={mode !== 'play' ? paint : undefined}
-                      won={won}
-                      label={showingDraft ? 'Proposed puzzle board' : 'Current puzzle board'}
-                    />
-                  )}
-                </div>
-                {mode === 'play' ? (
-                  <>
-                    {playback ? (
-                      <div className={s.playback}>
-                        <span>
-                          <Play size={14} />
-                          Solution replay
+                <div
+                  id="puzzle-mode-panel"
+                  role="tabpanel"
+                  aria-labelledby={`mode-tab-${mode}`}
+                  tabIndex={0}
+                >
+                  <div className={s.boardHeading}>
+                    <div>
+                      <div className={s.boardHeadingLine}>
+                        {showingDraft ? (
+                          <>
+                            <h2 className="sr-only">
+                              Edit puzzle: {draftTitle || 'Untitled adventure'}
+                            </h2>
+                            <input
+                              className={s.titleInput}
+                              aria-label="Puzzle title"
+                              value={draftTitle}
+                              maxLength={80}
+                              onChange={(e) => {
+                                invalidateAI();
+                                setDraftTitle(e.target.value);
+                              }}
+                            />
+                          </>
+                        ) : (
+                          <h2>{active.title}</h2>
+                        )}
+                        <span className={showingDraft ? s.proposedPill : s.currentPill}>
+                          {showingDraft ? (review ? 'Proposed' : 'Draft') : 'Current'}
                         </span>
+                      </div>
+                      <p>
+                        {board.width} × {board.height} grid<span>·</span>
+                        {showingDraft
+                          ? 'Make it your own'
+                          : (expedition?.difficulty ?? 'A small puzzle with a way through')}
+                      </p>
+                    </div>
+                    {mode === 'play' && (
+                      <div className={s.counters}>
                         <div>
-                          <button
-                            className={s.iconButton}
-                            aria-label="Previous solution step"
-                            disabled={playback.cursor === 0}
-                            onClick={() =>
-                              setPlayback({
-                                ...playback,
-                                cursor: playback.cursor - 1,
-                                running: false,
-                              })
-                            }
-                          >
-                            <SkipBack size={18} />
-                          </button>
-                          <button
-                            className={s.playbackPlay}
-                            aria-label={playback.running ? 'Pause solution' : 'Play solution'}
-                            onClick={() =>
-                              setPlayback({
-                                ...playback,
-                                cursor:
-                                  playback.cursor === playback.moves.length ? 0 : playback.cursor,
-                                running: !playback.running,
-                              })
-                            }
-                          >
-                            {playback.running ? <Pause size={18} /> : <Play size={18} />}
-                          </button>
-                          <button
-                            className={s.iconButton}
-                            aria-label="Next solution step"
-                            disabled={playback.cursor === playback.moves.length}
-                            onClick={() =>
-                              setPlayback({
-                                ...playback,
-                                cursor: playback.cursor + 1,
-                                running: false,
-                              })
-                            }
-                          >
-                            <SkipForward size={18} />
-                          </button>
-                          <strong>
-                            {playback.cursor} / {playback.moves.length}
-                          </strong>
-                          <select
-                            aria-label="Playback speed"
-                            value={speed}
-                            onChange={(e) => setSpeed(Number(e.target.value))}
-                          >
-                            <option value={750}>Slow</option>
-                            <option value={450}>Normal</option>
-                            <option value={180}>Fast</option>
-                          </select>
-                          <button
-                            className={s.iconButton}
-                            onClick={() => setPlayback(null)}
-                            aria-label="Exit solution replay"
-                          >
-                            <X size={17} />
-                          </button>
+                          <strong>{movesCount}</strong>
+                          <span>moves</span>
                         </div>
+                        <div>
+                          <strong>{pushesCount}</strong>
+                          <span>pushes</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className={s.boardArea}>
+                    {sharedLoading ? (
+                      <div className={s.loadingBoard}>
+                        <LoaderCircle className={s.spin} />
+                        <p>Opening your adventure…</p>
                       </div>
                     ) : (
-                      <div className={s.playControls}>
-                        <div className={s.keyboardTip}>
-                          <Keyboard size={18} />
+                      <Board
+                        board={board}
+                        state={gameState}
+                        editable={mode !== 'play'}
+                        changes={differences}
+                        uncertain={showingDraft ? review?.uncertain : []}
+                        extraPlayers={showingDraft ? review?.extraPlayers : []}
+                        selected={selectedCells}
+                        onCell={mode !== 'play' ? paint : undefined}
+                        won={won}
+                        theme={world}
+                        label={showingDraft ? 'Proposed puzzle board' : 'Current puzzle board'}
+                      />
+                    )}
+                  </div>
+                  {mode === 'play' ? (
+                    <>
+                      {playback ? (
+                        <div className={s.playback}>
                           <span>
-                            Arrow keys or <kbd>W</kbd>
-                            <kbd>A</kbd>
-                            <kbd>S</kbd>
-                            <kbd>D</kbd>
+                            <Play size={14} />
+                            Solution replay
+                          </span>
+                          <div>
+                            <button
+                              className={s.iconButton}
+                              aria-label="Previous solution step"
+                              disabled={playback.cursor === 0}
+                              onClick={() =>
+                                setPlayback({
+                                  ...playback,
+                                  cursor: playback.cursor - 1,
+                                  running: false,
+                                })
+                              }
+                            >
+                              <SkipBack size={18} />
+                            </button>
+                            <button
+                              className={s.playbackPlay}
+                              aria-label={playback.running ? 'Pause solution' : 'Play solution'}
+                              onClick={() =>
+                                setPlayback({
+                                  ...playback,
+                                  cursor:
+                                    playback.cursor === playback.moves.length ? 0 : playback.cursor,
+                                  running: !playback.running,
+                                })
+                              }
+                            >
+                              {playback.running ? <Pause size={18} /> : <Play size={18} />}
+                            </button>
+                            <button
+                              className={s.iconButton}
+                              aria-label="Next solution step"
+                              disabled={playback.cursor === playback.moves.length}
+                              onClick={() =>
+                                setPlayback({
+                                  ...playback,
+                                  cursor: playback.cursor + 1,
+                                  running: false,
+                                })
+                              }
+                            >
+                              <SkipForward size={18} />
+                            </button>
+                            <strong>
+                              {playback.cursor} / {playback.moves.length}
+                            </strong>
+                            <select
+                              aria-label="Playback speed"
+                              value={speed}
+                              onChange={(e) => setSpeed(Number(e.target.value))}
+                            >
+                              <option value={750}>Slow</option>
+                              <option value={450}>Normal</option>
+                              <option value={180}>Fast</option>
+                            </select>
+                            <button
+                              className={s.iconButton}
+                              onClick={() => setPlayback(null)}
+                              aria-label="Exit solution replay"
+                            >
+                              <X size={17} />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={s.playControls}>
+                          <div className={s.keyboardTip}>
+                            <Keyboard size={18} />
+                            <span>
+                              Arrow keys or <kbd>W</kbd>
+                              <kbd>A</kbd>
+                              <kbd>S</kbd>
+                              <kbd>D</kbd>
+                            </span>
+                          </div>
+                          <div className={s.dpad} aria-label="Touch movement controls">
+                            {(['left', 'up', 'down', 'right'] as Direction[]).map((dir) => {
+                              const Icon = DIRECTION_ICON[dir];
+                              return (
+                                <button
+                                  key={dir}
+                                  onClick={() => move(dir)}
+                                  aria-label={`Move ${dir}`}
+                                  disabled={won}
+                                >
+                                  <Icon size={20} />
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <button className={s.textButton} onClick={restart}>
+                            <RotateCcw size={16} />
+                            Restart
+                          </button>
+                        </div>
+                      )}
+                      {won && (
+                        <div className={s.winMessage}>
+                          <Flag size={18} />
+                          <strong>Found your way!</strong>
+                          <span>
+                            {playback
+                              ? 'Every step checked by the game rules.'
+                              : `${ownRun.moves} moves, ${ownRun.pushes} pushes. Ready for another twist?`}
                           </span>
                         </div>
-                        <div className={s.dpad} aria-label="Touch movement controls">
-                          {(['left', 'up', 'down', 'right'] as Direction[]).map((dir) => {
+                      )}
+                    </>
+                  ) : (
+                    <div className={s.editorBottom}>
+                      <div className={s.editActions}>
+                        <button
+                          className={s.iconButton}
+                          aria-label="Undo edit"
+                          disabled={editCursor <= 0}
+                          onClick={() => undoEdit(-1)}
+                        >
+                          <Undo2 size={18} />
+                        </button>
+                        <button
+                          className={s.iconButton}
+                          aria-label="Redo edit"
+                          disabled={editCursor >= editHistory.length - 1}
+                          onClick={() => undoEdit(1)}
+                        >
+                          <Redo2 size={18} />
+                        </button>
+                        <span>
+                          {differences.length} changed {differences.length === 1 ? 'cell' : 'cells'}
+                        </span>
+                      </div>
+                      <span className={s.editorHint}>
+                        {mode === 'remix'
+                          ? review && showingDraft
+                            ? 'Outlined cells are proposed changes'
+                            : 'Tap a cell to give your request context'
+                          : 'Pick a symbol. Tap a square.'}
+                      </span>
+                    </div>
+                  )}
+                  <div className={s.paperFooter}>
+                    <span className={s.saveStatus}>
+                      <CheckCheck size={14} />
+                      {sharedView ? 'Shared puzzle · original photo stays private' : saveLabel}
+                    </span>
+                    {!sharedView && (
+                      <button
+                        className={s.textButton}
+                        onClick={() =>
+                          downloadJson('sketchquest-puzzle.json', {
+                            title: showingDraft ? draftTitle : active.title,
+                            board,
+                          })
+                        }
+                      >
+                        <Download size={14} />
+                        <span>Export</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <aside className={s.sidebar} aria-label="Puzzle tools">
+                {mode === 'play' && (
+                  <>
+                    <div className={s.mission}>
+                      <span className={s.missionIcon}>
+                        <Flag size={22} />
+                      </span>
+                      <div>
+                        <h3>Your little quest</h3>
+                        <p>
+                          {totalRelics
+                            ? `Find all ${totalRelics} relic${totalRelics > 1 ? 's' : ''}, then reach the open arch.`
+                            : 'Reach the open arch. Pick up the key to unlock the door.'}{' '}
+                          Crates can be pushed, one at a time.
+                        </p>
+                      </div>
+                      {totalRelics > 0 && (
+                        <div className={s.relicInventory} aria-live="polite">
+                          <Gem size={19} />
+                          <strong>
+                            {foundRelics} / {totalRelics} relics
+                          </strong>
+                          <span>
+                            {foundRelics === totalRelics
+                              ? 'The exit is ready'
+                              : 'Explore every corner'}
+                          </span>
+                        </div>
+                      )}
+                      {board.rulesVersion === 2 && (
+                        <div className={s.terrainGuide}>
+                          {board.terrain.includes('water') && (
+                            <span>
+                              <Waves size={15} />
+                              Water blocks the way; bridges cross it.
+                            </span>
+                          )}
+                          {board.terrain.includes('ice') && (
+                            <span>
+                              <Snowflake size={15} />
+                              Ice carries you until solid ground.
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      <div className={s.missionPath} aria-hidden="true">
+                        <span>
+                          <Piece kind="player" />
+                        </span>
+                        <i />
+                        <span>
+                          <Piece kind={totalRelics ? 'relic' : 'key'} />
+                        </span>
+                        <i />
+                        <span>
+                          <Piece kind="exit" />
+                        </span>
+                      </div>
+                    </div>
+                    <div className={s.solverCard}>
+                      <div className={s.solverHeading}>
+                        {solving ? (
+                          <LoaderCircle className={s.spin} size={19} />
+                        ) : (
+                          <ShieldCheck size={20} />
+                        )}
+                        <h3>{solverText}</h3>
+                        {result?.status === 'solved' && <Check className={s.green} size={17} />}
+                      </div>
+                      <p>
+                        {result?.status === 'solved' ? (
+                          <>
+                            The shortest way out takes <strong>{result.moves} moves.</strong> Every
+                            step has been checked.
+                          </>
+                        ) : result?.status === 'unsolvable' ? (
+                          'Every reachable state was explored. Try moving an obstacle in Draw.'
+                        ) : result?.status === 'inconclusive' ? (
+                          'This is not proof that the puzzle is impossible. You can run the search again.'
+                        ) : (
+                          'A complete search checks the puzzle using the same rules you play with.'
+                        )}
+                      </p>
+                      {result?.status === 'solved' ? (
+                        <button
+                          className={s.secondaryButton}
+                          onClick={() =>
+                            setPlayback({ moves: result.solution, cursor: 0, running: true })
+                          }
+                        >
+                          <Play size={16} />
+                          Watch solution<span>{result.moves} steps</span>
+                        </button>
+                      ) : solving ? (
+                        <button
+                          className={s.textButton}
+                          onClick={() => {
+                            solveAbort.current?.abort();
+                            setSolving(false);
+                            setVerified({
+                              hash,
+                              result: {
+                                status: 'inconclusive',
+                                reason: 'cancelled',
+                                stats: { explored: 0, elapsedMs: 0 },
+                              },
+                            });
+                          }}
+                        >
+                          Cancel search
+                        </button>
+                      ) : (
+                        <button
+                          className={s.secondaryButton}
+                          disabled={!!issues.length}
+                          onClick={() => setSolveRefresh((x) => x + 1)}
+                        >
+                          Find a solution
+                        </button>
+                      )}
+                      {result && (
+                        <details className={s.searchDetails}>
+                          <summary>
+                            Search details
+                            <ChevronDown size={12} />
+                          </summary>
+                          <p>
+                            {result.stats.explored.toLocaleString()} states explored ·{' '}
+                            {Math.round(result.stats.elapsedMs)} ms
+                            <br />
+                            Breadth-first search · 5 s / 250,000 states
+                            <br />
+                            Shortest moves; pushes are not optimized.
+                          </p>
+                        </details>
+                      )}
+                    </div>
+                    <div className={s.historyCard}>
+                      <div className={s.sectionHeader}>
+                        <h3>
+                          <History size={16} />
+                          Your trail
+                        </h3>
+                        <span>{session.cursor} moves</span>
+                      </div>
+                      {session.moves.length ? (
+                        <div className={s.moveTrail}>
+                          <button
+                            onClick={() => {
+                              setPlayback(null);
+                              setSession({ ...session, cursor: 0 });
+                            }}
+                            aria-label="Return to starting position"
+                            className={session.cursor === 0 ? s.currentMove : ''}
+                          >
+                            <span>Start</span>
+                          </button>
+                          {session.moves.slice(0, 150).map((dir, index) => {
                             const Icon = DIRECTION_ICON[dir];
                             return (
                               <button
-                                key={dir}
-                                onClick={() => move(dir)}
-                                aria-label={`Move ${dir}`}
-                                disabled={won}
+                                key={index}
+                                onClick={() => {
+                                  setPlayback(null);
+                                  setSession({ ...session, cursor: index + 1 });
+                                }}
+                                aria-label={`Go to move ${index + 1}: ${dir}`}
+                                className={
+                                  index + 1 === session.cursor
+                                    ? s.currentMove
+                                    : index + 1 > session.cursor
+                                      ? s.futureMove
+                                      : ''
+                                }
                               >
-                                <Icon size={20} />
+                                <Icon size={15} />
                               </button>
                             );
                           })}
                         </div>
-                        <button className={s.textButton} onClick={restart}>
-                          <RotateCcw size={16} />
-                          Restart
-                        </button>
-                      </div>
-                    )}
-                    {won && (
-                      <div className={s.winMessage}>
-                        <Flag size={18} />
-                        <strong>Found your way!</strong>
-                        <span>
-                          {playback
-                            ? 'Every step checked by the game rules.'
-                            : `${ownRun.moves} moves, ${ownRun.pushes} pushes. Ready for another twist?`}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className={s.editorBottom}>
-                    <div className={s.editActions}>
-                      <button
-                        className={s.iconButton}
-                        aria-label="Undo edit"
-                        disabled={editCursor <= 0}
-                        onClick={() => undoEdit(-1)}
-                      >
-                        <Undo2 size={18} />
-                      </button>
-                      <button
-                        className={s.iconButton}
-                        aria-label="Redo edit"
-                        disabled={editCursor >= editHistory.length - 1}
-                        onClick={() => undoEdit(1)}
-                      >
-                        <Redo2 size={18} />
-                      </button>
-                      <span>
-                        {differences.length} changed {differences.length === 1 ? 'cell' : 'cells'}
-                      </span>
-                    </div>
-                    <span className={s.editorHint}>
-                      {mode === 'remix'
-                        ? review && showingDraft
-                          ? 'Outlined cells are proposed changes'
-                          : 'Tap a cell to give your request context'
-                        : 'Pick a symbol. Tap a square.'}
-                    </span>
-                  </div>
-                )}
-                <div className={s.paperFooter}>
-                  <span className={s.saveStatus}>
-                    <CheckCheck size={14} />
-                    {sharedView ? 'Shared puzzle · original photo stays private' : saveLabel}
-                  </span>
-                  {!sharedView && (
-                    <button
-                      className={s.textButton}
-                      onClick={() =>
-                        downloadJson('sketchquest-puzzle.json', {
-                          title: showingDraft ? draftTitle : active.title,
-                          board,
-                        })
-                      }
-                    >
-                      <Download size={14} />
-                      <span>Export</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </section>
-
-            <aside className={s.sidebar} aria-label="Puzzle tools">
-              {mode === 'play' && (
-                <>
-                  <div className={s.mission}>
-                    <span className={s.missionIcon}>
-                      <Flag size={22} />
-                    </span>
-                    <div>
-                      <h3>Your little quest</h3>
-                      <p>
-                        Reach the open arch. Pick up the key to unlock the door. Crates can be
-                        pushed, one at a time.
-                      </p>
-                    </div>
-                    <div className={s.missionPath} aria-hidden="true">
-                      <span>
-                        <Piece kind="player" />
-                      </span>
-                      <i />
-                      <span>
-                        <Piece kind="key" />
-                      </span>
-                      <i />
-                      <span>
-                        <Piece kind="exit" />
-                      </span>
-                    </div>
-                  </div>
-                  <div className={s.solverCard}>
-                    <div className={s.solverHeading}>
-                      {solving ? (
-                        <LoaderCircle className={s.spin} size={19} />
                       ) : (
-                        <ShieldCheck size={20} />
+                        <p className={s.muted}>Every adventure begins with one move.</p>
                       )}
-                      <h3>{solverText}</h3>
-                      {result?.status === 'solved' && <Check className={s.green} size={17} />}
-                    </div>
-                    <p>
-                      {result?.status === 'solved' ? (
-                        <>
-                          The shortest way out takes <strong>{result.moves} moves.</strong> Every
-                          step has been checked.
-                        </>
-                      ) : result?.status === 'unsolvable' ? (
-                        'Every reachable state was explored. Try moving an obstacle in Draw.'
-                      ) : result?.status === 'inconclusive' ? (
-                        'This is not proof that the puzzle is impossible. You can run the search again.'
-                      ) : (
-                        'A complete search checks the puzzle using the same rules you play with.'
-                      )}
-                    </p>
-                    {result?.status === 'solved' ? (
-                      <button
-                        className={s.secondaryButton}
-                        onClick={() =>
-                          setPlayback({ moves: result.solution, cursor: 0, running: true })
-                        }
-                      >
-                        <Play size={16} />
-                        Watch solution<span>{result.moves} steps</span>
-                      </button>
-                    ) : solving ? (
-                      <button
-                        className={s.textButton}
-                        onClick={() => {
-                          solveAbort.current?.abort();
-                          setSolving(false);
-                          setVerified({
-                            hash,
-                            result: {
-                              status: 'inconclusive',
-                              reason: 'cancelled',
-                              stats: { explored: 0, elapsedMs: 0 },
-                            },
-                          });
-                        }}
-                      >
-                        Cancel search
-                      </button>
-                    ) : (
-                      <button
-                        className={s.secondaryButton}
-                        disabled={!!issues.length}
-                        onClick={() => setSolveRefresh((x) => x + 1)}
-                      >
-                        Find a solution
-                      </button>
-                    )}
-                    {result && (
-                      <details className={s.searchDetails}>
-                        <summary>
-                          Search details
-                          <ChevronDown size={12} />
-                        </summary>
-                        <p>
-                          {result.stats.explored.toLocaleString()} states explored ·{' '}
-                          {Math.round(result.stats.elapsedMs)} ms
-                          <br />
-                          Breadth-first search · 5 s / 250,000 states
-                          <br />
-                          Shortest moves; pushes are not optimized.
-                        </p>
-                      </details>
-                    )}
-                  </div>
-                  <div className={s.historyCard}>
-                    <div className={s.sectionHeader}>
-                      <h3>
-                        <History size={16} />
-                        Your trail
-                      </h3>
-                      <span>{session.cursor} moves</span>
-                    </div>
-                    {session.moves.length ? (
-                      <div className={s.moveTrail}>
+                      <div className={s.historyActions}>
                         <button
+                          className={s.textButton}
+                          disabled={session.cursor === 0}
                           onClick={() => {
                             setPlayback(null);
-                            setSession({ ...session, cursor: 0 });
+                            setSession({ ...session, cursor: session.cursor - 1 });
                           }}
-                          aria-label="Return to starting position"
-                          className={session.cursor === 0 ? s.currentMove : ''}
                         >
-                          <span>Start</span>
+                          <Undo2 size={14} />
+                          Step back
                         </button>
-                        {session.moves.slice(0, 150).map((dir, index) => {
-                          const Icon = DIRECTION_ICON[dir];
-                          return (
-                            <button
-                              key={index}
-                              onClick={() => {
-                                setPlayback(null);
-                                setSession({ ...session, cursor: index + 1 });
-                              }}
-                              aria-label={`Go to move ${index + 1}: ${dir}`}
-                              className={
-                                index + 1 === session.cursor
-                                  ? s.currentMove
-                                  : index + 1 > session.cursor
-                                    ? s.futureMove
-                                    : ''
-                              }
-                            >
-                              <Icon size={15} />
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className={s.muted}>Every adventure begins with one move.</p>
-                    )}
-                    <div className={s.historyActions}>
-                      <button
-                        className={s.textButton}
-                        disabled={session.cursor === 0}
-                        onClick={() => {
-                          setPlayback(null);
-                          setSession({ ...session, cursor: session.cursor - 1 });
-                        }}
-                      >
-                        <Undo2 size={14} />
-                        Step back
-                      </button>
-                      <button
-                        className={s.textButton}
-                        disabled={session.cursor === session.moves.length}
-                        onClick={() => {
-                          setPlayback(null);
-                          setSession({ ...session, cursor: session.cursor + 1 });
-                        }}
-                      >
-                        Step forward
-                        <Redo2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                  {!sharedView && (
-                    <button className={s.remixCta} onClick={() => switchMode('remix')}>
-                      <span className={s.remixCtaIcon}>
-                        <WandSparkles size={21} />
-                      </span>
-                      <span>
-                        <strong>What if it were a little different?</strong>
-                        <small>Change your puzzle with words</small>
-                      </span>
-                      <ArrowRight size={18} />
-                    </button>
-                  )}
-                </>
-              )}
-
-              {mode === 'draw' && (
-                <>
-                  <div className={s.paletteCard}>
-                    <div className={s.sectionHeader}>
-                      <h3>Your drawing kit</h3>
-                      <span>1–8 shortcuts</span>
-                    </div>
-                    <div className={s.palette}>
-                      {TOOL_INFO.map((item) => (
                         <button
-                          key={item.tool}
-                          aria-pressed={tool === item.tool}
-                          className={tool === item.tool ? s.selectedTool : ''}
-                          onClick={() => setTool(item.tool)}
-                          title={`${item.label} (${item.shortcut})`}
+                          className={s.textButton}
+                          disabled={session.cursor === session.moves.length}
+                          onClick={() => {
+                            setPlayback(null);
+                            setSession({ ...session, cursor: session.cursor + 1 });
+                          }}
                         >
-                          <span>
-                            {item.tool === 'erase' ? (
-                              <Eraser size={27} />
-                            ) : (
-                              <Piece kind={item.tool as 'wall'} />
-                            )}
-                          </span>
-                          {item.label}
-                          <small>{item.shortcut}</small>
+                          Step forward
+                          <Redo2 size={14} />
                         </button>
-                      ))}
+                      </div>
                     </div>
-                    <div className={s.dimensions}>
-                      <Maximize2 size={15} />
-                      <span>Grid size</span>
-                      <label>
-                        <span className="sr-only">Grid width</span>
+                    {!sharedView && (
+                      <button className={s.remixCta} onClick={() => switchMode('remix')}>
+                        <span className={s.remixCtaIcon}>
+                          <WandSparkles size={21} />
+                        </span>
+                        <span>
+                          <strong>What if it were a little different?</strong>
+                          <small>Change your puzzle with words</small>
+                        </span>
+                        <ArrowRight size={18} />
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {mode === 'draw' && (
+                  <>
+                    <div className={s.paletteCard}>
+                      <div className={s.sectionHeader}>
+                        <h3>Your drawing kit</h3>
+                        <span>1–0, I & R shortcuts</span>
+                      </div>
+                      <div className={s.palette}>
+                        {TOOL_INFO.map((item) => (
+                          <button
+                            key={item.tool}
+                            aria-pressed={tool === item.tool}
+                            className={tool === item.tool ? s.selectedTool : ''}
+                            onClick={() => setTool(item.tool)}
+                            title={`${item.label} (${item.shortcut})`}
+                          >
+                            <span>
+                              {item.tool === 'erase' ? (
+                                <Eraser size={27} />
+                              ) : (
+                                <Piece kind={item.tool as 'wall'} />
+                              )}
+                            </span>
+                            {item.label}
+                            <small>{item.shortcut}</small>
+                          </button>
+                        ))}
+                      </div>
+                      <div className={s.dimensions}>
+                        <Maximize2 size={15} />
+                        <span>Grid size</span>
+                        <label>
+                          <span className="sr-only">Grid width</span>
+                          <select
+                            aria-label="Grid width"
+                            value={board.width}
+                            onChange={(e) => resizeDraft(Number(e.target.value), board.height)}
+                          >
+                            {[4, 5, 6, 7, 8].map((n) => (
+                              <option key={n}>{n}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <span>×</span>
                         <select
-                          aria-label="Grid width"
-                          value={board.width}
-                          onChange={(e) => resizeDraft(Number(e.target.value), board.height)}
+                          aria-label="Grid height"
+                          value={board.height}
+                          onChange={(e) => resizeDraft(board.width, Number(e.target.value))}
                         >
                           {[4, 5, 6, 7, 8].map((n) => (
                             <option key={n}>{n}</option>
                           ))}
                         </select>
-                      </label>
-                      <span>×</span>
-                      <select
-                        aria-label="Grid height"
-                        value={board.height}
-                        onChange={(e) => resizeDraft(board.width, Number(e.target.value))}
-                      >
-                        {[4, 5, 6, 7, 8].map((n) => (
-                          <option key={n}>{n}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <p className={s.finePrint}>
-                      Player, key, door and exit tools move the existing symbol. Erase removes a
-                      piece first, then its terrain.
-                    </p>
-                  </div>
-                  <div className={s.validation}>
-                    <h3>
-                      {solving ? (
-                        <LoaderCircle className={s.spin} size={17} />
-                      ) : (
-                        <ShieldCheck size={17} />
-                      )}{' '}
-                      {solverText}
-                    </h3>
-                    {issues.length ? (
-                      <ul>
-                        {issues.map((issue, index) => (
-                          <li key={index}>{issue.message}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p>
-                        {result?.status === 'solved'
-                          ? `The shortest route is ${result.moves} moves. Your board is ready to play.`
-                          : result?.status === 'unsolvable'
-                            ? 'This board is valid, but the exit cannot be reached. You can keep editing or save this revision.'
-                            : 'Board structure is valid. The solver will check whether there is a way out.'}
+                      </div>
+                      <p className={s.finePrint}>
+                        Player, key, door and exit tools move the existing symbol. Erase removes a
+                        piece first, then its terrain.
                       </p>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {mode === 'remix' && !(showingDraft && review) && (
-                <div className={s.remixPanel}>
-                  <span className={s.sparkleMark}>
-                    <WandSparkles size={24} />
-                  </span>
-                  <h3>A new twist, in your words.</h3>
-                  <p>
-                    Tell your puzzle what to become. You’ll see every change before it becomes real.
-                  </p>
-                  <label className={s.promptLabel} htmlFor="change-request">
-                    What would you change?
-                  </label>
-                  <textarea
-                    id="change-request"
-                    value={prompt}
-                    maxLength={600}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Make the shortest solution longer…"
-                    rows={4}
-                  />
-                  {selectedCells.length > 0 && (
-                    <div className={s.selectionNote}>
-                      <MousePointer2 size={13} />
-                      Referring to{' '}
-                      {selectedCells.map((c) => coord(c, active.board.width)).join(', ')}
-                      <button
-                        className={s.iconButton}
-                        onClick={() => setSelectedCells([])}
-                        aria-label="Clear selected cells"
-                      >
-                        <X size={13} />
-                      </button>
                     </div>
-                  )}
-                  <div className={s.promptChips}>
-                    {[
-                      'Make the shortest solution longer',
-                      'Add a crate',
-                      'Remove this obstacle',
-                    ].map((text) => (
-                      <button key={text} onClick={() => setPrompt(text)}>
-                        {text}
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    className={s.primaryButton}
-                    disabled={!services.aiEnabled || aiBusy || !prompt.trim()}
-                    onClick={() => void propose()}
-                  >
-                    {aiBusy ? (
-                      <LoaderCircle className={s.spin} size={17} />
-                    ) : (
-                      <WandSparkles size={17} />
-                    )}
-                    Propose a change
-                  </button>
-                  {aiBusy && (
-                    <div className={s.aiProgress} role="status">
-                      <span>{aiProgress}</span>
-                      <button onClick={invalidateAI}>Cancel</button>
-                    </div>
-                  )}
-                  {!services.aiEnabled && (
-                    <div className={s.connectionNote}>
-                      <p>
-                        Live AI isn’t connected here yet. You can draw any change yourself, or
-                        explore a prepared example.
-                      </p>
-                      {activeHash === boardHash(EXAMPLES[0].board) ? (
-                        <button
-                          className={s.textButton}
-                          disabled={aiBusy}
-                          onClick={() => void propose(true)}
-                        >
-                          Try a prepared change
-                          <ArrowRight size={14} />
-                        </button>
-                      ) : (
-                        <button className={s.textButton} onClick={() => chooseExample(0)}>
-                          Open the prepared example
-                          <ArrowRight size={14} />
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  <div className={s.proofPromise}>
-                    <ShieldCheck size={15} />
-                    <span>Every accepted AI edit gets a verified solution.</span>
-                  </div>
-                </div>
-              )}
-
-              {showingDraft && (
-                <div className={s.reviewPanel}>
-                  <div className={s.sectionHeader}>
-                    <h3>{review ? 'Review the proposal' : 'Ready for a test run?'}</h3>
-                    {review?.prepared && <span>Prepared example</span>}
-                  </div>
-                  {review && (
-                    <>
-                      <p>{review.explanation}</p>
-                      {review.source === 'text' &&
-                        review.baselineMoves != null &&
-                        result?.status === 'solved' && (
-                          <div className={s.comparison}>
-                            <ShieldCheck size={18} />
-                            <div>
-                              <small>Shortest solution</small>
-                              <strong>
-                                {review.baselineMoves} → {result.moves} moves
-                              </strong>
-                            </div>
-                          </div>
-                        )}
-                      {sourcePreview && (
-                        <img
-                          className={s.sourcePreview}
-                          src={sourcePreview}
-                          alt="Your prepared sketch, kept private"
-                        />
-                      )}
-                      {review.notes.length > 0 && (
-                        <ul className={s.reviewNotes}>
-                          {review.notes.map((note, i) => (
-                            <li key={i}>{note}</li>
+                    <div className={s.validation}>
+                      <h3>
+                        {solving ? (
+                          <LoaderCircle className={s.spin} size={17} />
+                        ) : (
+                          <ShieldCheck size={17} />
+                        )}{' '}
+                        {solverText}
+                      </h3>
+                      {issues.length ? (
+                        <ul>
+                          {issues.map((issue, index) => (
+                            <li key={index}>{issue.message}</li>
                           ))}
                         </ul>
+                      ) : (
+                        <p>
+                          {result?.status === 'solved'
+                            ? `The shortest route is ${result.moves} moves. Your board is ready to play.`
+                            : result?.status === 'unsolvable'
+                              ? 'This board is valid, but the exit cannot be reached. You can keep editing or save this revision.'
+                              : 'Board structure is valid. The solver will check whether there is a way out.'}
+                        </p>
                       )}
-                      {review.uncertain.length > 0 && (
-                        <div className={s.uncertainNotice}>
-                          <strong>
-                            {review.uncertain.length}{' '}
-                            {review.uncertain.length === 1 ? 'cell needs' : 'cells need'} a second
-                            look
-                          </strong>
-                          <p>
-                            Edit the amber cells, or confirm that their symbols are correct. These
-                            are model suggestions, not calibrated confidence scores.
-                          </p>
+                    </div>
+                  </>
+                )}
+
+                {mode === 'remix' && !(showingDraft && review) && (
+                  <div className={s.remixPanel}>
+                    <span className={s.sparkleMark}>
+                      <WandSparkles size={24} />
+                    </span>
+                    <h3>A new twist, in your words.</h3>
+                    <p>
+                      Tell your puzzle what to become. You’ll see every change before it becomes
+                      real.
+                    </p>
+                    <label className={s.promptLabel} htmlFor="change-request">
+                      What would you change?
+                    </label>
+                    <textarea
+                      id="change-request"
+                      value={prompt}
+                      maxLength={600}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      placeholder="Make the shortest solution longer…"
+                      rows={4}
+                    />
+                    {selectedCells.length > 0 && (
+                      <div className={s.selectionNote}>
+                        <MousePointer2 size={13} />
+                        Referring to{' '}
+                        {selectedCells.map((c) => coord(c, active.board.width)).join(', ')}
+                        <button
+                          className={s.iconButton}
+                          onClick={() => setSelectedCells([])}
+                          aria-label="Clear selected cells"
+                        >
+                          <X size={13} />
+                        </button>
+                      </div>
+                    )}
+                    <div className={s.promptChips}>
+                      {[
+                        'Make the shortest solution longer',
+                        'Add a crate',
+                        'Remove this obstacle',
+                      ].map((text) => (
+                        <button key={text} onClick={() => setPrompt(text)}>
+                          {text}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      className={s.primaryButton}
+                      disabled={!services.aiEnabled || aiBusy || !prompt.trim()}
+                      onClick={() => void propose()}
+                    >
+                      {aiBusy ? (
+                        <LoaderCircle className={s.spin} size={17} />
+                      ) : (
+                        <WandSparkles size={17} />
+                      )}
+                      Propose a change
+                    </button>
+                    {aiBusy && (
+                      <div className={s.aiProgress} role="status">
+                        <span>{aiProgress}</span>
+                        <button onClick={invalidateAI}>Cancel</button>
+                      </div>
+                    )}
+                    {!services.aiEnabled && (
+                      <div className={s.connectionNote}>
+                        <p>
+                          Live AI isn’t connected here yet. You can draw any change yourself, or
+                          explore a prepared example.
+                        </p>
+                        {activeHash === boardHash(EXAMPLES[0].board) ? (
                           <button
-                            className={s.secondaryButton}
-                            disabled={review.extraPlayers.length > 0}
-                            onClick={() => setReview({ ...review, uncertain: [] })}
+                            className={s.textButton}
+                            disabled={aiBusy}
+                            onClick={() => void propose(true)}
                           >
-                            <Check size={15} />I checked these cells
+                            Try a prepared change
+                            <ArrowRight size={14} />
                           </button>
-                        </div>
-                      )}
-                      {differences.length > 0 && (
-                        <details className={s.diffDetails}>
-                          <summary>
-                            {differences.length} changed{' '}
-                            {differences.length === 1 ? 'cell' : 'cells'}
-                            <ChevronDown size={13} />
-                          </summary>
-                          <ul>
-                            {differences.map((cell) => (
-                              <li key={cell}>
-                                <strong>{coord(cell, board.width)}</strong>{' '}
-                                {cellDescription(active.board, cell)} <ArrowRight size={12} />{' '}
-                                {cellDescription(board, cell)}
-                              </li>
+                        ) : (
+                          <button className={s.textButton} onClick={() => chooseExample(0)}>
+                            Open the prepared example
+                            <ArrowRight size={14} />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    <div className={s.proofPromise}>
+                      <ShieldCheck size={15} />
+                      <span>Every accepted AI edit gets a verified solution.</span>
+                    </div>
+                  </div>
+                )}
+
+                {showingDraft && (
+                  <div className={s.reviewPanel}>
+                    <div className={s.sectionHeader}>
+                      <h3>{review ? 'Review the proposal' : 'Ready for a test run?'}</h3>
+                      {review?.prepared && <span>Prepared example</span>}
+                    </div>
+                    {review && (
+                      <>
+                        <p>{review.explanation}</p>
+                        {review.source === 'text' &&
+                          review.baselineMoves != null &&
+                          result?.status === 'solved' && (
+                            <div className={s.comparison}>
+                              <ShieldCheck size={18} />
+                              <div>
+                                <small>Shortest solution</small>
+                                <strong>
+                                  {review.baselineMoves} → {result.moves} moves
+                                </strong>
+                              </div>
+                            </div>
+                          )}
+                        {sourcePreview && (
+                          <img
+                            className={s.sourcePreview}
+                            src={sourcePreview}
+                            alt="Your prepared sketch, kept private"
+                          />
+                        )}
+                        {review.notes.length > 0 && (
+                          <ul className={s.reviewNotes}>
+                            {review.notes.map((note, i) => (
+                              <li key={i}>{note}</li>
                             ))}
                           </ul>
-                        </details>
-                      )}
-                    </>
-                  )}
-                  <button
-                    className={s.primaryButton}
-                    onClick={acceptBoard}
-                    disabled={
-                      issues.length > 0 ||
-                      !!review?.uncertain.length ||
-                      !!review?.extraPlayers.length ||
-                      (review?.source === 'text' && result?.status !== 'solved')
-                    }
-                  >
-                    <Check size={17} />
-                    {review ? 'Accept & play' : 'Apply board & play'}
-                  </button>
-                  <div className={s.reviewActions}>
-                    {mode !== 'draw' && (
-                      <button className={s.textButton} onClick={() => switchMode('draw')}>
-                        <Pencil size={14} />
-                        Adjust by hand
-                      </button>
+                        )}
+                        {review.uncertain.length > 0 && (
+                          <div className={s.uncertainNotice}>
+                            <strong>
+                              {review.uncertain.length}{' '}
+                              {review.uncertain.length === 1 ? 'cell needs' : 'cells need'} a second
+                              look
+                            </strong>
+                            <p>
+                              Edit the amber cells, or confirm that their symbols are correct. These
+                              are model suggestions, not calibrated confidence scores.
+                            </p>
+                            <button
+                              className={s.secondaryButton}
+                              disabled={review.extraPlayers.length > 0}
+                              onClick={() => setReview({ ...review, uncertain: [] })}
+                            >
+                              <Check size={15} />I checked these cells
+                            </button>
+                          </div>
+                        )}
+                        {differences.length > 0 && (
+                          <details className={s.diffDetails}>
+                            <summary>
+                              {differences.length} changed{' '}
+                              {differences.length === 1 ? 'cell' : 'cells'}
+                              <ChevronDown size={13} />
+                            </summary>
+                            <ul>
+                              {differences.map((cell) => (
+                                <li key={cell}>
+                                  <strong>{coord(cell, board.width)}</strong>{' '}
+                                  {cellDescription(active.board, cell)} <ArrowRight size={12} />{' '}
+                                  {cellDescription(board, cell)}
+                                </li>
+                              ))}
+                            </ul>
+                          </details>
+                        )}
+                      </>
                     )}
-                    <button className={s.textButton} onClick={discardDraft}>
-                      Keep current puzzle
+                    <button
+                      className={s.primaryButton}
+                      onClick={acceptBoard}
+                      disabled={
+                        issues.length > 0 ||
+                        !!review?.uncertain.length ||
+                        !!review?.extraPlayers.length ||
+                        (review?.source === 'text' && result?.status !== 'solved')
+                      }
+                    >
+                      <Check size={17} />
+                      {review ? 'Accept & play' : 'Apply board & play'}
                     </button>
+                    <div className={s.reviewActions}>
+                      {mode !== 'draw' && (
+                        <button className={s.textButton} onClick={() => switchMode('draw')}>
+                          <Pencil size={14} />
+                          Adjust by hand
+                        </button>
+                      )}
+                      <button className={s.textButton} onClick={discardDraft}>
+                        Keep current puzzle
+                      </button>
+                    </div>
+                    <p className={s.finePrint}>
+                      Starts a fresh play session. The previous revision stays in your notebook.
+                    </p>
                   </div>
-                  <p className={s.finePrint}>
-                    Starts a fresh play session. The previous revision stays in your notebook.
-                  </p>
-                </div>
-              )}
-            </aside>
-          </div>
+                )}
+              </aside>
+            </div>
+          </>
         )}
 
         {notice && (
@@ -1943,6 +2095,7 @@ export default function App() {
             </button>
           </section>
         )}
+        {!sharedView && <ExpeditionTrail board={active.board} onChoose={choosePuzzle} />}
         {!sharedView && (
           <section className={s.explainer}>
             <div>
@@ -2119,6 +2272,26 @@ export default function App() {
                 'exit',
                 'Your way home',
                 'Only you can finish the quest. A crate on the exit does not win.',
+              ],
+              [
+                'water',
+                'A river in the way',
+                'Water stops you and your crates. Find a bridge or another route.',
+              ],
+              [
+                'bridge',
+                'A way across',
+                'Bridges are solid ground. Walk or push crates across them.',
+              ],
+              [
+                'ice',
+                'Keep on sliding',
+                'Step onto ice to glide in that direction until solid ground or an obstacle. A glide counts as one move. Crates move one cell per push.',
+              ],
+              [
+                'relic',
+                'Leave no treasure behind',
+                'Collect every relic before the exit opens. Crates can hide relics, but only the explorer collects them.',
               ],
             ].map(([piece, title, text]) => (
               <div key={piece}>

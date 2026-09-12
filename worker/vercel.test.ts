@@ -1,6 +1,6 @@
 import { BlobPreconditionFailedError } from '@vercel/blob';
 import { describe, expect, it, vi } from 'vitest';
-import { EXAMPLES } from '../src/core/examples';
+import { EXAMPLES, EXPEDITIONS } from '../src/core/examples';
 import {
   admitVercelShare,
   createVercelApp,
@@ -100,6 +100,17 @@ describe('Vercel deployment adapter', () => {
     expect((await app.request(`${origin}/api/shares/not-an-id`, {}, env)).status).toBe(404);
     expect((await app.request(`${origin}/api/shares/${'A'.repeat(22)}`, {}, env)).status).toBe(404);
     expect(store.writes).toBe(0);
+  });
+  it('round-trips version 2 shares with three crates and new terrain without downgrading', async () => {
+    const app = createVercelApp(new MemoryStore());
+    for (const expedition of [EXPEDITIONS[1], EXPEDITIONS[5]]) {
+      const input = { title: expedition.title, board: expedition.board };
+      const response = await app.fetch(post(input), env);
+      expect(response.status).toBe(201);
+      const { id } = (await response.json()) as { id: string };
+      const read = await app.request(`${origin}/api/shares/${id}`, {}, env);
+      expect(await read.json()).toMatchObject(input);
+    }
   });
   it('requires the verified Hobby guard and a quota secret before any storage access', async () => {
     const store = new MemoryStore();

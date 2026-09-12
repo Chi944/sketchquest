@@ -1,0 +1,47 @@
+.scene {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  max-height: 480px;
+  min-height: 240px;
+  overflow: hidden;
+  border-radius: 12px;
+  isolation: isolate;
+  background: radial-gradient(ellipse at 42% 38%, #416674 0%, #264854 46%, #142d3b 100%);
+  box-shadow: inset 0 0 70px #091d2e55;
+  touch-action: pan-y;
+}
+
+.scene::after {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 1px solid #e3dcb524;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.scene canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.coast {
+  background: radial-gradient(ellipse at 42% 38%, #4b8c8b 0%, #2f666d 46%, #173d4d 100%);
+}
+
+.frost {
+  background: radial-gradient(ellipse at 42% 38%, #6a8c99 0%, #436778 46%, #273f58 100%);
+}
+
+@media (max-width: 480px) {
+  .scene {
+    aspect-ratio: 6 / 5;
+    min-height: 230px;
+    border-radius: 8px;
+  }
+  .scene::after {
+    inset: 8px;
+  }
+}

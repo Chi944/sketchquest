@@ -69,7 +69,7 @@ function checkedBoard(value: unknown): BoardDefinition {
   } catch {
     throw new ApiFault(
       'INVALID_BOARD',
-      'The board must follow the puzzle rules: a 4–8 grid, one player and exit, up to two crates, and a key for its door.',
+      'Use a 4–8 grid, one player and exit, a key for any door, and supported puzzle pieces within the rules version limits.',
       422,
     );
   }

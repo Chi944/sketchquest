@@ -308,3 +308,133 @@
     height: 17px;
   }
 }
+
+/* The HTML grid remains the editing surface and accessible description. */
+.viewBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 14px;
+  color: #4a6568;
+  font-size: 10px;
+}
+.viewBar > div {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: #dce7df;
+  border: 1px solid #b5c9bd;
+  border-radius: 6px;
+}
+.viewBar button {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  min-height: 32px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 6px 9px;
+  color: #365a60;
+}
+.viewBar button[aria-pressed='true'] {
+  background: #fffdf0;
+  color: #294950;
+  box-shadow: 0 1px 3px #21414726;
+}
+.worldView {
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  background: radial-gradient(ellipse at 50% 35%, #416b70, #173b48 75%);
+  position: relative;
+}
+.worldView .viewBar {
+  margin: 0;
+  padding: 14px 20px 0;
+  position: relative;
+  z-index: 1;
+  color: #cbdeda;
+}
+.worldView .viewBar > div {
+  background: #133443;
+  border-color: #71939370;
+}
+.worldView .viewBar button {
+  color: #d4e7e2;
+}
+.worldView .viewBar button[aria-pressed='true'] {
+  color: #264750;
+  background: #e8eee1;
+}
+.semanticGrid {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.sceneLoading {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 3/2;
+  color: #dce9e0;
+  font-size: 13px;
+  max-height: 480px;
+}
+.water {
+  background: #5f9eaf;
+}
+.bridge {
+  background: #5e9aaa;
+}
+.ice {
+  background: #abd2de;
+}
+.relic {
+  background: #eee4bd;
+}
+[data-theme='frost'] > .columnLabels {
+  color: #476a81;
+}
+[data-theme='frost'] .board {
+  border-color: #8098a3;
+  background: #94b5c0;
+}
+[data-theme='frost'] .wallCell {
+  background: #b6ced5;
+}
+[data-theme='frost'] .cell:not(.water):not(.ice):not(.bridge) {
+  background: #e2edf0;
+}
+[data-theme='coast'] .board {
+  border-color: #769895;
+  background: #8eb2b0;
+}
+[data-theme='coast'] .wallCell {
+  background: #bad1c5;
+}
+@media (max-width: 650px) {
+  .viewBar > span {
+    font-size: 9px;
+  }
+  .viewBar button {
+    min-height: 37px;
+    font-size: 9px;
+    padding: 6px 8px;
+  }
+  .worldView .viewBar {
+    padding: 11px 12px 0;
+  }
+  .sceneLoading {
+    aspect-ratio: 6/5;
+  }
+}

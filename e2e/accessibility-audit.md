@@ -1,5 +1,7 @@
 # Accessibility audit
 
+The expedition update also passes the full 30-test browser suite, including the seven states below, actual 3D rendering, reduced motion, deliberate WebGL fallback, and all six new puzzle replays. The legacy interaction/a11y cases explicitly select the visible Grid view; separate expedition cases verify the default 3D view. Production desktop and 390px mobile 3D checks also passed.
+
 The browser suite uses Chromium, axe-core, semantic locators, and synthetic local image input. All AI requests are intercepted. No extraction quality or accessibility conformance claim is inferred from these tests.
 
 ## Checked states

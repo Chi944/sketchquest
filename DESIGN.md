@@ -1,38 +1,44 @@
-# SketchQuest visual system
+# SketchQuest expedition design
 
-The current direction is an enchanted expedition through miniature forest ruins. The user rejected the previous flat notebook treatment and explicitly requested generated photorealistic scenery and characters. This direction supersedes the earlier pale-blue paper, cobalt, and procedural-piece styling. The actual playable grid remains the primary interactive object.
+The site is a playable expedition portal: compact cinematic scenery, clear chapter selection, and a tactile 3D puzzle as its centre. This implements the user's request for richer animation, more obstacles and varied puzzles, and game-site inspiration. The earlier still-image notebook direction is historical.
 
-## Art and composition
+## Reference and original choices
 
-- Use a dramatic, photorealistic forest-ruin scene as a compact editorial hero. Give the copy a quiet region of the image and a dependable dark scrim. Put the product promise and photo action inside this composition so a second introductory section does not displace the board.
-- Present the game as a physical tabletop puzzle: warm stone, subtle sand or paper texture, mossy walls, a small explorer, a wooden crate, an antique brass key, a locked door, and an illuminated exit. Material, light direction, perspective, and contact shadows should agree across assets.
-- Render generated props as individual image assets inside real grid cells. Keep game geometry, focus, labels, selection, uncertainty, and proposal markers in HTML/CSS. The scenic hero and props are decorative representations; they do not determine the rules.
-- Keep imagery composed and still. Use texture at low contrast around the board, with enough separation between traversable ground and obstacles to recognize the route immediately. Repeated props should read as intentional game pieces rather than a repeating wallpaper.
+[Official game-site research](docs/design/game-site-inspiration.md) records actual rendered observations of Monument Valley III, TUNIC and LEGO Builder's Journey. The implementation adapts their attention to world framing, material light and chapter navigation. No reference artwork, code, characters or logos were copied.
 
-## Palette and type
+The page uses a deep blue/teal expedition surround, warm light play surfaces, brass actions and a compact scenic hero. Three.js renders the actual puzzle in a bounded orthographic camera. Six authored expedition cards show their real board geometry; forest, coast and frost each have distinct materials and atmosphere.
 
-The page is a warm ivory gallery with forest-ink type, green actions, and amber material highlights. Implemented anchors are canvas `#f2f1e9`, ink `#293d33`, muted ink `#53634f`, primary green `#245b48`, and ivory action text. Amber is an accent for brass, light, and small decorative details; it is not an automatic choice for small text.
+## Tokens and type
 
-Use self-hosted Fraunces for the editorial display and main headings, Nunito Sans for readable controls, and Bricolage Grotesque for supporting utility elements. Preserve semantic heading order. Secondary information becomes quieter through position and scale, never through faint text.
+| Role          | Value     |
+| ------------- | --------- |
+| Deep surround | #163443   |
+| Raised stage  | #203e 4b  |
+| Open page     | #dbe 6e 7 |
+| Light surface | #fbfbf 3  |
+| Text          | #29434b   |
+| Brass action  | #f 0c 674 |
 
-## Responsive layout
+Bricolage Grotesque gives the title, board and expedition names their compact, confident shape. Nunito Sans carries controls and explanatory text. Fraunces remains in the scenic annotation and chapter numerals. All fonts are self-hosted and licensed.
 
-- A centered work area of about 1,190px keeps a generous board and a narrower control column on desktop. A scenic hero should be roughly 260–300px tall on wide screens and compact on phones; exact dimensions must be checked against the implemented content.
-- Stack the workbench at tablet widths. Keep the current action, move controls, counters, and state beside or directly beneath their board. The scenery must not require visitors to scroll past a large campaign page to reach the game.
-- At 320px, allow display text and upload-button content to wrap. Keep the board square according to its actual dimensions and avoid fixed minimum widths in flex children. Check both 4×4 and 8×8 boards, long revision names, and proposal states.
-- Set image dimensions and fit behavior explicitly in the board, palette, objective trail, example thumbnails, and covered-terrain markers. Images must not cause layout shifts or intercept pointer events.
+The desktop work area is at most 1360px, with a roughly 2:1 board/tools split. The scenic introduction is approximately 240px high. Chapter navigation leads immediately to the game. The stage is capped at 480px high on desktop and adapts to phone widths; controls remain directly under it. Expedition cards appear beneath the workbench. At 800px the workbench stacks; narrower phones use one column.
 
-## Semantics and accessibility
+## Objects and motion
 
-- Deep teal indicates action or selection. Verified success uses green plus text/check marks, uncertainty uses amber plus question marks, and a proposed change uses a distinct marker plus explicit text. Retain Current, Draft, and Proposed near the board title.
-- Maintain at least 4.5:1 for normal text, visible focus against both images and solid surfaces, and non-color state cues. Put cell focus, proposal diamonds, question markers, and covered-item markers above photographic assets.
-- Main touch and movement controls remain at least 44px on phones. Dense grid cells stay independently named and keyboard operable; a photograph cannot replace the semantic control.
-- Decorative hero and prop images use empty alternative text where adjacent text or cell labels already supplies their meaning. Preserve labels such as Player, Key, Door, and Exit in the palette and help.
-- Respect reduced motion. Keep only restrained interaction feedback, and never add perpetual particles, parallax, or motion required to understand a move.
-- AI interpretation and word edits remain reviewable proposals. Keep draft preservation, unavailable-service recovery, and honest solver outcomes intact through the visual change.
+- Stone courses have beveled edges, material grain and small moss details. Crates have wooden slats, braces and nails. The key and gate share brass material cues. The explorer uses our generated transparent character atlas as a billboard on the physical board.
+- Water, bridges, ice and relics are visually different in both 3D and the flat grid. Their rules come solely from the shared transition function. The renderer never infers collisions or collects an item by itself.
+- Legal moves and pushes interpolate over 220–620ms according to distance. Gate opening lasts 460ms. A pickup produces a brief burst; completing a quest produces a bounded celebration. Pointer tilt is small and returns to rest.
+- Animation stops after the interaction settles. Rendering pauses when the page is hidden or the scene is offscreen. Pixel density is capped at 1.6 and active animation renders near 30fps. Geometry, textures, materials, observers and the renderer are disposed on removal.
+- Reduced motion immediately reflects the final game state without travel, tilt or particles. The game remains fully usable. WebGL failure switches visibly to the 2D grid.
 
-## Provenance and verification
+## Interaction and accessibility
 
-[Photoreal art direction](docs/design/photoreal-art-direction.md) records the composition, asset roles, implementation risks, and verification criteria for this redesign. [Design method provenance](docs/design/source-notes.md) records the Impeccable and Design with Intent guidance inspected during the project.
+The user can select 3D world or Grid; the preference persists when browser storage is available. Drawing and proposal review use the exact flat grid, with editable cell labels, changed-cell diamonds, uncertainty markers and focus outlines. The 3D canvas is decorative and retains a separate accessible cell description. Movement and view controls remain keyboard/touch operable.
 
-Generated scenery and characters are original synthetic visual assets, not photographs of a real location or evidence of live image-interpretation accuracy. Earlier notebook screenshots and the original generated UI reference record the previous design; they are not the target for this pass. Updated screenshots must identify the running implementation and viewport size. No audience research or complete screen-reader certification is claimed.
+Normal text must retain at least 4.5:1 contrast. Status uses explicit text and symbols. Relic collection has a live count. Rules explain that ice counts as one directional input and that all relics are required to complete an expedition. New chapters preserve existing notebooks and parked drafts.
+
+Live AI unavailability remains explicit. Prepared quests and the prepared 6→10 remix are authored examples; they are not represented as model responses. Solver results and replay are computed in the browser.
+
+## Evidence
+
+[Expedition verification](docs/design/expedition-verification.md) records tests, actual screenshots, performance observations and the release's limits. Previous generated PNGs and prompts remain in [image provenance](docs/design/photoreal-generation.md).

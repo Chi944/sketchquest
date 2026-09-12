@@ -3090,3 +3090,914 @@
     font-size: 20px;
   }
 }
+
+/* Expedition portal: the playable world is the centre of the page. */
+.app {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #163443 0, #214654 380px, #dbe6e7 680px, #e8eeeb 100%);
+  color: #29434b;
+}
+.header {
+  max-width: 1360px;
+  height: 78px;
+  padding: 0 28px;
+  border-bottom: 1px solid #d7e6df20;
+}
+.brand {
+  color: #fff7dd;
+  font-family: 'Bricolage Grotesque', sans-serif;
+  font-size: 29px;
+  font-weight: 700;
+  letter-spacing: -1.3px;
+}
+.brandQuest,
+.brandDot {
+  color: inherit;
+}
+.brandMark {
+  background: #f0c674;
+  color: #233e45;
+  border: 1px solid #ffe3a4;
+  box-shadow: 2px 3px 0 #092a39;
+  transform: rotate(-6deg);
+  border-radius: 10px 10px 10px 3px;
+}
+.headerRight {
+  gap: 24px;
+  color: #e0eae6;
+}
+.header .freeTag {
+  display: none;
+}
+.header .textButton {
+  color: #e0eae6;
+}
+.header .textButton:hover {
+  background: #f7ffed14;
+}
+.expeditionLink {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 800;
+}
+.notebookButton {
+  background: #f3f2e8;
+  color: #243e47;
+  border-color: #ffffff77;
+  box-shadow: 0 3px 0 #092c38;
+}
+.notebookButton span {
+  background: #dce7e3;
+  color: #29444a;
+}
+.main {
+  max-width: 1360px;
+  padding: 18px 28px 0;
+}
+.intro {
+  min-height: 238px;
+  isolation: isolate;
+  border-radius: 15px;
+  margin-bottom: 0;
+  overflow: hidden;
+  box-shadow: 0 10px 25px #0a222824;
+}
+.heroImage {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 74% 48%;
+  opacity: 1;
+}
+.intro::after {
+  background: linear-gradient(90deg, #102f40f5, #103141d9 25%, #14344228 72%, #15394315);
+}
+.intro > .heroContent {
+  padding: 27px 34px;
+  max-width: 650px;
+}
+.intro h1 {
+  font:
+    700 46px/1.06 'Bricolage Grotesque',
+    sans-serif;
+  letter-spacing: -1.8px;
+  color: #fff8e7;
+}
+.intro h1 span {
+  color: inherit;
+}
+.intro p {
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 13px 0 17px;
+  max-width: 430px;
+  color: #e1e9e5;
+}
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 19px;
+}
+.uploadButton {
+  padding: 11px 14px;
+  border-radius: 6px;
+  background: #f0c674;
+  border: 1px solid #ffdfa0;
+  color: #223b40;
+  box-shadow: 0 3px 0 #74532a;
+  min-height: 45px;
+}
+.uploadButton > span {
+  font-size: 12px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+.uploadButton small {
+  font-size: 10px;
+  color: #4b4b2d;
+}
+.uploadButton:hover {
+  background: #ffda8b;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 #74532a;
+}
+.exploreButton {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #f5f1de;
+  font-weight: 800;
+}
+.exploreButton:hover {
+  text-decoration: underline;
+}
+.heroNote {
+  position: absolute;
+  right: 29px;
+  bottom: 25px;
+  z-index: 2;
+  color: #fff5df;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-shadow: 0 2px 5px #132f39;
+}
+.heroNote > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.heroNote strong {
+  font:
+    500 20px 'Fraunces',
+    serif;
+}
+.heroNote div span {
+  font-size: 10px;
+}
+.heroCompass {
+  width: 49px;
+  height: 49px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #f2dabd80;
+  border-radius: 50%;
+  background: #193c4950;
+  backdrop-filter: blur(8px);
+}
+.worldNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 17px 0;
+  color: #f5f7eb;
+}
+.worldNav > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.worldNav strong {
+  font-size: 12px;
+}
+.worldButtons {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px;
+  background: #102f3d80;
+  border: 1px solid #f4ffed22;
+  border-radius: 8px;
+}
+.worldButtons button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 37px;
+  padding: 7px 14px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #e0ebe6;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+}
+.worldButtons button[aria-pressed='true'] {
+  color: #213d45;
+  background: #ead7af;
+  box-shadow: 0 2px 3px #0c273844;
+}
+.worldButtons button:hover {
+  background: #f7ffe91c;
+}
+.worldButtons button[aria-pressed='true']:hover {
+  background: #f3dfb7;
+}
+.worldNav > a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 800;
+}
+.workbench {
+  grid-template-columns: minmax(0, 2.08fr) minmax(300px, 1fr);
+  gap: 22px;
+  align-items: start;
+  scroll-margin-top: 18px;
+}
+.paper {
+  border-radius: 13px;
+  background: #fbfbf3;
+  border: 1px solid #c1cfc9;
+  box-shadow: 0 10px 22px #0c31311c;
+  overflow: hidden;
+}
+.paperTop {
+  padding: 10px 18px;
+  background: #203e4b;
+  border-color: #e3e9d422;
+}
+.paperTop > .iconButton {
+  color: #e2eae2;
+}
+.tabs {
+  background: #102d3970;
+  border-radius: 7px;
+  padding: 3px;
+}
+.tabs button {
+  color: #d6e5de;
+  font-size: 12px;
+  border-radius: 5px;
+  min-height: 37px;
+  padding: 9px 20px;
+}
+.tabs .activeTab {
+  background: #f0cd8c;
+  color: #243e43;
+  box-shadow: 0 2px 3px #08273777;
+}
+.tabs button:not(.activeTab):hover {
+  background: #ffffff15;
+}
+.boardHeading {
+  padding: 18px 24px 15px;
+  margin: 0;
+  background: #203e4b;
+  color: #fcf7e6;
+}
+.boardHeading h2,
+.titleInput {
+  font:
+    600 25px/1.25 'Bricolage Grotesque',
+    sans-serif;
+  letter-spacing: -0.8px;
+  color: #fcf7e6;
+}
+.boardHeading p {
+  color: #c0d7d4;
+  font-size: 11px;
+  margin-top: 5px;
+}
+.boardHeading p span {
+  color: inherit;
+}
+.currentPill {
+  background: #486251;
+  color: #f2f6df;
+  font-size: 10px;
+}
+.proposedPill {
+  background: #e9d29f;
+  color: #604519;
+}
+.titleInput {
+  background: #143340;
+  border-color: #738f93;
+}
+.counters strong {
+  font:
+    600 27px 'Bricolage Grotesque',
+    sans-serif;
+  color: #f0cf95;
+}
+.counters span {
+  color: #c6d8d6;
+}
+.counters {
+  gap: 18px;
+}
+.boardArea {
+  padding: 15px 24px 21px;
+  margin: 0;
+  background: radial-gradient(ellipse at center, #fffdf3, #e7eee3);
+  min-height: 0;
+}
+.boardArea:has([class*='worldView']) {
+  padding: 0;
+  background: #244854;
+}
+.playControls {
+  background: #f4f6eb;
+  border-color: #d2ddd1;
+  padding: 12px 21px;
+}
+.dpad button {
+  background: #e3ebdc;
+  color: #29494b;
+  border-color: #bbccbb;
+  box-shadow: 0 3px 0 #a6bba9;
+  transition:
+    transform 100ms,
+    box-shadow 100ms;
+}
+.dpad button:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #a6bba9;
+}
+.paperFoot {
+  background: #edf1e6;
+  color: #475e5c;
+  border-color: #d9e0d2;
+}
+.keyboardTip {
+  color: #53675c;
+}
+.boardArea + div {
+  border-top-color: #d1ddce;
+}
+.sidebar {
+  gap: 17px;
+}
+.mission {
+  background: linear-gradient(135deg, #234553, #183b47);
+  border: 1px solid #66818180;
+  box-shadow: 0 6px 14px #183e4420;
+  border-radius: 11px;
+  padding: 21px;
+  color: #e5ede1;
+}
+.mission h3 {
+  font:
+    600 25px/1.15 'Bricolage Grotesque',
+    sans-serif;
+  color: #fff3d2;
+  letter-spacing: -0.7px;
+}
+.mission p {
+  color: #dce8de;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.missionIcon {
+  background: #d2c99a;
+  color: #274b4b;
+  border-radius: 7px;
+}
+.missionPath {
+  grid-column: 1/-1;
+  margin: 7px 0 0;
+  background: #e7eddc;
+  border-radius: 7px;
+  padding: 5px 18px;
+  justify-content: space-around;
+}
+.missionPath > span {
+  height: 43px;
+  width: 43px;
+}
+.missionPath i {
+  border-color: #60776170;
+}
+.relicInventory {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  grid-column: 1/-1;
+  color: #ffdb93;
+  font-size: 12px;
+  padding: 11px 0 0;
+  border-top: 1px solid #dce7d62b;
+}
+.relicInventory > span {
+  font-size: 10px;
+  margin-left: auto;
+  color: #d6e7e0;
+}
+.terrainGuide {
+  grid-column: 1/-1;
+  display: grid;
+  gap: 7px;
+  font-size: 11px;
+  color: #d3e4df;
+}
+.terrainGuide > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.solverCard {
+  background: #f9fcf5;
+  border-color: #c6d5c8;
+  box-shadow: 0 4px 0 #c4d1c550;
+}
+.solverHeading {
+  color: #295254;
+}
+.solverCard > p {
+  font-size: 12px;
+  color: #4b6867;
+}
+.secondaryButton {
+  background: #e9f0e4;
+  border-color: #b8cebc;
+  color: #264d4c;
+}
+.secondaryButton > span {
+  color: #52665d;
+}
+.sectionHeader h3,
+.sectionHeader > span,
+.muted {
+  color: #475f64;
+}
+.historyCard {
+  padding: 4px 6px;
+}
+.remixCta {
+  background: #eedcb9;
+  border-color: #cbbb93;
+  color: #5c4b27;
+  box-shadow: 0 4px 0 #c4b38644;
+}
+.remixCta strong {
+  color: #604419;
+}
+.remixCta > span:nth-child(2) > span {
+  color: #66552c;
+}
+.remixIcon {
+  background: #d9c18b;
+  color: #654e22;
+}
+.primaryButton {
+  background: #265c60;
+  border-color: #1b4d50;
+  color: #fff9e7;
+  box-shadow: 0 3px 0 #123b42;
+}
+.primaryButton:hover {
+  background: #327075;
+}
+.bottomBar {
+  margin: 18px 0 0;
+  padding: 0;
+}
+.shareButton {
+  background: #f9fbed;
+  border-color: #b1c8bd;
+  color: #294d4c;
+}
+.moreWays {
+  color: #475d64;
+}
+.moreWays > span {
+  color: #475d64;
+}
+.moreWays .textButton {
+  color: #344f58;
+}
+.explainer {
+  margin: 32px 0 0;
+  padding: 26px 0;
+  border-top: 1px solid #beced0;
+}
+.explainer small,
+.explainer strong {
+  color: #4a6067;
+}
+.footer {
+  max-width: 1304px;
+  padding: 25px 12px;
+  margin: 0 auto;
+  border-color: #bbced0;
+  color: #52656a;
+}
+.footer a {
+  color: inherit;
+}
+.sharedIntro {
+  color: #f6f3e4;
+  padding: 20px 0 32px;
+}
+.sharedIntro h1 {
+  color: #fff4d8;
+}
+.sharedIntro p,
+.sharedIntro .eyebrow {
+  color: #d7e6de;
+}
+.sharedIntro .secondaryButton {
+  color: #254349;
+  background: #e5eddf;
+}
+.palette {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.palette > button {
+  min-width: 0;
+}
+.palette small {
+  color: #55694f;
+}
+.palette button.selectedTool small {
+  color: inherit;
+}
+.winMessage {
+  animation: questComplete 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  background: #dceacb;
+  border-color: #adca91;
+  color: #365536;
+}
+.notice {
+  animation: noticeIn 180ms ease-out;
+  background: #f7f9ed;
+  border-color: #b9ccbe;
+  color: #385b58;
+}
+.app :focus-visible {
+  outline-color: #ddaa49;
+  outline-offset: 3px;
+}
+.paperFoot button:focus-visible,
+.moreWays button:focus-visible {
+  outline-color: #356a69;
+}
+@keyframes questComplete {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes noticeIn {
+  from {
+    transform: translateY(5px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@media (max-width: 1100px) {
+  .workbench {
+    grid-template-columns: minmax(0, 1.75fr) minmax(280px, 1fr);
+    gap: 18px;
+  }
+  .worldNav > div:first-child {
+    display: none;
+  }
+  .worldNav {
+    justify-content: center;
+  }
+  .worldNav > a {
+    margin-left: 5px;
+  }
+  .heroNote {
+    display: none;
+  }
+  .boardHeading h2,
+  .titleInput {
+    font-size: 22px;
+  }
+  .intro h1 {
+    font-size: 43px;
+  }
+}
+@media (max-width: 800px) {
+  .workbench {
+    grid-template-columns: 1fr;
+  }
+  .intro {
+    min-height: 239px;
+  }
+  .heroImage {
+    inset: 0;
+    width: 100%;
+    object-position: 70% 48%;
+  }
+  .intro > .heroContent {
+    max-width: 540px;
+    padding: 28px;
+  }
+  .intro::after {
+    background: linear-gradient(90deg, #123041ee, #123041b0 42%, #15394328);
+  }
+  .worldNav {
+    justify-content: space-between;
+  }
+  .worldNav > a {
+    display: none;
+  }
+  .worldButtons {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .worldButtons button {
+    flex: 1;
+    padding: 8px;
+  }
+  .headerRight {
+    gap: 16px;
+  }
+  .boardHeading {
+    padding: 18px 23px;
+  }
+  .boardArea {
+    padding: 15px 30px 23px;
+  }
+  .sidebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+  .sidebar > div {
+    min-width: 0;
+  }
+  .sidebar > .historyCard,
+  .sidebar > .remixCta {
+    grid-column: 1/-1;
+  }
+  .sidebar:has(.palette) {
+    display: flex;
+  }
+  .mission {
+    height: 100%;
+  }
+  .mission h3 {
+    font-size: 23px;
+  }
+  .heroActions {
+    gap: 16px;
+  }
+}
+@media (max-width: 650px) {
+  .header {
+    height: 65px;
+    padding: 0 17px;
+  }
+  .brand {
+    font-size: 24px;
+    letter-spacing: -1px;
+  }
+  .brandMark {
+    width: 30px;
+    height: 32px;
+  }
+  .headerRight {
+    gap: 10px;
+  }
+  .expeditionLink {
+    display: none;
+  }
+  .notebookButton {
+    min-height: 38px;
+    padding: 7px 9px;
+    font-size: 11px;
+  }
+  .header .textButton {
+    font-size: 0;
+    gap: 0;
+    padding: 8px;
+  }
+  .header .textButton svg {
+    width: 18px;
+    height: 18px;
+  }
+  .main {
+    padding: 13px 13px 0;
+  }
+  .intro {
+    min-height: 270px;
+    border-radius: 10px;
+  }
+  .intro > .heroContent {
+    padding: 24px 22px;
+    max-width: 440px;
+  }
+  .intro h1 {
+    font-size: 36px;
+    letter-spacing: -1.3px;
+    line-height: 1.08;
+  }
+  .intro p {
+    font-size: 12px;
+    line-height: 1.65;
+    margin: 15px 0 18px;
+    max-width: 265px;
+  }
+  .heroImage {
+    object-position: 72% 52%;
+    opacity: 0.8;
+  }
+  .heroActions {
+    align-items: flex-start;
+    gap: 13px;
+    flex-wrap: wrap;
+  }
+  .uploadButton {
+    padding: 10px 12px;
+    min-height: 45px;
+  }
+  .uploadButton > span {
+    font-size: 11px;
+  }
+  .uploadButton small {
+    font-size: 9px;
+  }
+  .uploadArrow {
+    display: none;
+  }
+  .exploreButton {
+    font-size: 11px;
+    min-height: 43px;
+    max-width: 95px;
+    line-height: 1.3;
+  }
+  .worldNav {
+    padding: 13px 0;
+  }
+  .worldButtons {
+    padding: 3px;
+    gap: 2px;
+  }
+  .worldButtons button {
+    padding: 8px 2px;
+    font-size: 9px;
+    gap: 4px;
+    flex-direction: column;
+    min-height: 48px;
+  }
+  .worldButtons button svg {
+    width: 17px;
+    height: 17px;
+  }
+  .paperTop {
+    padding: 9px 12px;
+  }
+  .tabs button {
+    padding: 9px 17px;
+    font-size: 12px;
+  }
+  .boardHeading {
+    padding: 17px 17px 14px;
+  }
+  .boardHeading h2,
+  .titleInput {
+    font-size: 22px;
+  }
+  .boardHeading p {
+    font-size: 10px;
+  }
+  .boardHeadingLine {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .counters {
+    gap: 12px;
+  }
+  .counters strong {
+    font-size: 25px;
+  }
+  .counters span {
+    font-size: 9px;
+  }
+  .boardArea {
+    padding: 15px 9px 22px;
+  }
+  .playControls {
+    padding: 12px 16px;
+  }
+  .sidebar {
+    display: flex;
+  }
+  .mission h3 {
+    font-size: 25px;
+  }
+  .mission p {
+    font-size: 13px;
+  }
+  .missionPath > span {
+    height: 46px;
+    width: 46px;
+  }
+  .solverCard > p {
+    font-size: 13px;
+  }
+  .moreWays {
+    gap: 11px;
+    justify-content: center;
+  }
+  .bottomBar {
+    margin-top: 17px;
+  }
+  .moreWays .textButton {
+    font-size: 11px;
+  }
+  .footer {
+    padding: 22px 17px;
+  }
+  .palette > button > span {
+    width: 40px;
+    height: 40px;
+  }
+  .sharedIntro h1 {
+    font-size: 31px;
+  }
+  .app {
+    background: linear-gradient(180deg, #163443 0, #214654 400px, #dbe6e7 740px, #e8eeeb 100%);
+  }
+}
+@media (max-width: 370px) {
+  .header {
+    padding: 0 12px;
+  }
+  .brand {
+    font-size: 22px;
+  }
+  .brandMark {
+    width: 27px;
+  }
+  .notebookButton {
+    font-size: 10px;
+    padding: 7px;
+  }
+  .headerRight {
+    gap: 3px;
+  }
+  .main {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  .intro > .heroContent {
+    padding: 25px 18px;
+  }
+  .intro h1 {
+    font-size: 33px;
+  }
+  .heroActions {
+    gap: 10px;
+  }
+  .exploreButton {
+    max-width: 79px;
+    font-size: 10px;
+  }
+  .boardHeading h2,
+  .titleInput {
+    font-size: 20px;
+  }
+  .titleInput {
+    max-width: 174px;
+  }
+  .tabs button {
+    padding: 9px 14px;
+  }
+  .worldButtons button {
+    font-size: 8px;
+  }
+  .counters {
+    gap: 8px;
+  }
+}

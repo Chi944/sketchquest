@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { boardHash, emptyBoard } from '../src/core/board';
+import { EXPEDITIONS } from '../src/core/examples';
 import { app } from './index';
 import type { Env } from './env';
 import { testDatabase } from './test-db';
@@ -83,6 +84,15 @@ describe('SketchQuest API with migrated SQLite and fake AI', () => {
     expect(count(database, 'shares')).toBe(1);
   });
 
+  it('round-trips an expedition snapshot through the existing shared-board parser', async () => {
+    const expedition = EXPEDITIONS[3];
+    const input = { title: expedition.title, board: expedition.board };
+    const created = await app.request(post('/api/shares', input), {}, env);
+    expect(created.status).toBe(201);
+    const { id } = (await created.json()) as { id: string };
+    const response = await app.request(`${origin}/api/shares/${id}`, {}, env);
+    expect(await response.json()).toMatchObject(input);
+  });
   it('rejects foreign/missing origins and malformed content before writes', async () => {
     const body = { board: emptyBoard(4, 4), title: 'My puzzle' };
     expect(

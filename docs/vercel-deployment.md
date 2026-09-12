@@ -11,6 +11,7 @@ The Vercel build serves the same React application and browser solver as the Clo
 ## Available behavior
 
 - Drawing, editing, playing, shortest-path solving, replay, revisions, local autosave, JSON import/export, and the clearly labeled prepared remix work in the browser.
+- Six expeditions add water, bridges, sliding ice, collectible relics, and a lazy-loaded interactive Three.js view. Rules-version 1 boards remain compatible; the new expeditions use rules version 2.
 - Sharing writes a canonical immutable snapshot to private Vercel Blob storage and returns an unguessable `/s/<id>` URL. Anyone with that URL can read the snapshot through the API. It is a real server snapshot, not an encoded puzzle in the URL.
 - Live photo interpretation and natural-language generation are disabled on this deployment. The API returns `AI_DISABLED`; no fallback model or provider is called.
 
@@ -82,3 +83,26 @@ The final deployment, `dpl_EBsje2CWXz7uH7SRqztS4W5oCdYG`, reached `READY` in 17 
 The real smoke puzzle remains available at [The little escape](https://sketchquest-beige.vercel.app/s/dRbY-OklZBbbxwXPocXcAg). It contains only the original public example board and its title. The smoke check consumed one sharing reservation and made no inference requests.
 
 The accompanying local verification passed 98 unit/integration tests, 19 Chromium browser tests, and all seven axe accessibility states. These results cover implemented behavior; they do not measure live model accuracy or guarantee accessibility for every possible board and interaction.
+
+## Expedition expansion deployment — 13 September 2026
+
+The expansion is deployed at the same [production URL](https://sketchquest-beige.vercel.app/). Deployment `dpl_Ct8u2rd6p7VLhCZDCQujePznW7Re` reached `READY` in 30 seconds. The existing project, private Blob store, free-plan guard, and quota limits were retained. A fresh authenticated team check confirmed the Hobby plan before uploading; no paid resource was added.
+
+The remote Linux build completed its strict application typecheck, Vite build, and Node API transpilation without TypeScript errors. The Three.js board view is a separate 590,025-byte JavaScript chunk (approximately 151 KB compressed), requested when the 3D view opens. The main application bundle is approximately 330 KB (105 KB compressed). The build retains the expected large-chunk notice for the lazy 3D and HEIC modules.
+
+| Check                         | Observed result                                                                          |
+| ----------------------------- | ---------------------------------------------------------------------------------------- |
+| Homepage and `/api/status`    | HTTP 200; sharing enabled, live AI disabled                                              |
+| Lazy Three.js board chunk     | HTTP 200, JavaScript, 590,025 bytes                                                      |
+| Version-2 snapshot creation   | HTTP 201; canonical Winter vault expedition payload read directly from `EXPEDITIONS`     |
+| Version-2 snapshot read-back  | HTTP 200; `rulesVersion: 2`; complete 8 × 8 board matched its source exactly             |
+| Version-2 shared page         | HTTP 200; immutable snapshot cache retained                                              |
+| Existing version-1 snapshot   | HTTP 200; `rulesVersion: 1`; original board and title unchanged                          |
+| Final deployment runtime scan | No runtime errors logged during the API/share checks                                     |
+| Local regression verification | 117 unit/integration tests and 30 Chromium browser tests passed before production upload |
+
+The new real snapshot is [Winter vault](https://sketchquest-beige.vercel.app/s/RB4ly4aZcaDtElki6hLDYQ), containing ice, water, a bridge, a locked gate, and relics. The original [The little escape](https://sketchquest-beige.vercel.app/s/dRbY-OklZBbbxwXPocXcAg) remains available unchanged. This expansion smoke check consumed one sharing reservation and made no model calls.
+
+Fresh production browser checks confirmed the default "3D world view" was selected and its live WebGL canvas was present. The coast expedition had no horizontal overflow at a 390-pixel viewport. Winter vault displayed its 3D frost theme; a real replay completed 13/13 moves, collected 3/3 relics, and reached the "Found your way" win state. No page errors occurred in these checks.
+
+Production browser evidence: [desktop 3D](design/expedition-desktop.png), [mobile coast](design/expedition-mobile.png), and [frost expedition](design/expedition-frost.png).

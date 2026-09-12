@@ -14,28 +14,27 @@ export interface SolveOptions {
   signal?: AbortSignal;
   yieldEveryMs?: number;
 }
-const KEY_BIT = 1 << 18;
-const STATE_SPACE = 1 << 19;
-const MAX_POSSIBLE_STATES = 249_984;
+const KEY_BIT = 1 << 24;
+const RELIC_SHIFT = 25;
 
 export function encodeState(state: GameState): number {
-  const a = state.crates[0] ?? 0;
-  const b = state.crates[1] ?? 0;
-  const first = state.crates.length === 2 ? Math.min(a, b) : a;
-  const second = state.crates.length === 2 ? Math.max(a, b) : 0;
-  return state.player | (first << 6) | (second << 12) | (state.hasKey ? KEY_BIT : 0);
+  const crates = [...state.crates].sort((a, b) => a - b);
+  return (
+    state.player |
+    ((crates[0] ?? 0) << 6) |
+    ((crates[1] ?? 0) << 12) |
+    ((crates[2] ?? 0) << 18) |
+    (state.hasKey ? KEY_BIT : 0) |
+    ((state.collectedRelics ?? 0) << RELIC_SHIFT)
+  );
 }
 
-function decodeState(encoded: number, crateCount: number): GameState {
+function decodeState(encoded: number, crateCount: number, rulesVersion: 1 | 2): GameState {
   return {
     player: encoded & 63,
-    crates:
-      crateCount === 2
-        ? [(encoded >> 6) & 63, (encoded >> 12) & 63]
-        : crateCount === 1
-          ? [(encoded >> 6) & 63]
-          : [],
+    crates: Array.from({ length: crateCount }, (_, index) => (encoded >> ((index + 1) * 6)) & 63),
     hasKey: Boolean(encoded & KEY_BIT),
+    ...(rulesVersion === 2 ? { collectedRelics: (encoded >> RELIC_SHIFT) & 15 } : {}),
   };
 }
 
@@ -49,7 +48,7 @@ export async function solve(
   const maxStates = options.maxStates ?? 250_000;
   const maxMs = options.maxMs ?? 5_000;
   const yieldEveryMs = options.yieldEveryMs ?? 12;
-  if (!Number.isInteger(maxStates) || maxStates < 1)
+  if (!Number.isSafeInteger(maxStates) || maxStates < 1)
     throw new Error('maxStates must be a positive integer.');
   if (!Number.isFinite(maxMs) || maxMs < 0)
     throw new Error('maxMs must be a finite, non-negative number.');
@@ -67,12 +66,13 @@ export async function solve(
   if (isWon(board, start))
     return { status: 'solved', solution: [], moves: 0, pushes: 0, stats: stats() };
   if (maxMs === 0) return incomplete('time_budget');
-  const predecessor = new Int32Array(STATE_SPACE).fill(-1);
-  const incoming = new Uint8Array(STATE_SPACE);
-  const queue = new Uint32Array(Math.min(maxStates, MAX_POSSIBLE_STATES));
   const startCode = encodeState(start);
-  predecessor[startCode] = startCode;
-  queue[0] = startCode;
+  // Version 2's larger theoretical state space must never allocate a dense 2^29 table.
+  // Store only discovered states and retain the same explicit search budgets.
+  const predecessor: number[] = [-1];
+  const incoming: number[] = [-1];
+  const queue: number[] = [startCode];
+  const visited = new Map<number, number>([[startCode, 0]]);
   let head = 0;
   let tail = 1;
   let lastYield = performance.now();
@@ -86,12 +86,13 @@ export async function solve(
       if (options.signal?.aborted) return incomplete('cancelled');
       if (lastYield - started >= maxMs) return incomplete('time_budget');
     }
-    const encoded = queue[head++];
-    const state = decodeState(encoded, board.crates.length);
+    const currentIndex = head++;
+    const encoded = queue[currentIndex];
+    const state = decodeState(encoded, board.crates.length, board.rulesVersion);
     explored += 1;
     if (isWon(board, state)) {
       const solution: Direction[] = [];
-      for (let step = encoded; step !== startCode; step = predecessor[step])
+      for (let step = currentIndex; predecessor[step] !== -1; step = predecessor[step])
         solution.push(DIRECTIONS[incoming[step]]);
       solution.reverse();
       const checked = replay(board, solution);
@@ -111,10 +112,11 @@ export async function solve(
       const result = transition(board, state, DIRECTIONS[direction]);
       if (!result.ok) continue;
       const next = encodeState(result.state);
-      if (predecessor[next] !== -1) continue;
+      if (visited.has(next)) continue;
       if (tail >= maxStates) return incomplete('state_budget');
-      predecessor[next] = encoded;
-      incoming[next] = direction;
+      visited.set(next, tail);
+      predecessor[tail] = currentIndex;
+      incoming[tail] = direction;
       queue[tail++] = next;
     }
   }

@@ -2,13 +2,19 @@
 
 **Draw a puzzle. Play it. Change it with words. Check the proof.**
 
-[Open SketchQuest](https://sketchquest-beige.vercel.app) · [Play a shared puzzle](https://sketchquest-beige.vercel.app/s/dRbY-OklZBbbxwXPocXcAg)
+[Open SketchQuest](https://sketchquest-beige.vercel.app) · [Play Winter vault](https://sketchquest-beige.vercel.app/s/RB4ly4aZcaDtElki6hLDYQ) · [Original shared puzzle](https://sketchquest-beige.vercel.app/s/dRbY-OklZBbbxwXPocXcAg)
 
 SketchQuest is an original grid-puzzle workbench with a manual editor, a deterministic shortest-path solver, photo preparation, structured change review, and immutable sharing. The production target is **Vercel Hobby**, with a dedicated private Blob store for shared puzzles. The original Cloudflare Free adapter remains available. No paid model fallback, payment feature, or prepaid gateway is configured. Live photo interpretation and free-text generation are currently disabled; the prepared remix is clearly labeled.
 
-![SketchQuest playable desktop interface](docs/design/photoreal-desktop-play.png)
+![SketchQuest 3D expedition interface](docs/design/expedition-desktop.png)
 
-The interface was refined using Impeccable and Design with Intent, then rebuilt around generated photorealistic scenery and an explorer character. [Artwork, exact prompts, and desktop/mobile captures](docs/design/photoreal-generation.md) record the actual production assets. Verification: 98 unit/integration tests and 19 Chromium browser tests pass; live model evaluation remains unrun.
+The interface combines original generated scenery with a real Three.js puzzle diorama, animated movement, opening gates, and collectible relics. Six new expeditions explore forest ruins, a sunken coast, and frozen passages. [Official game-site inspiration](docs/design/game-site-inspiration.md), [artwork provenance](docs/design/photoreal-generation.md), and [expedition verification](docs/design/expedition-verification.md) record the design and implementation. Verification: 117 unit/integration tests and 30 Chromium browser tests pass; live model evaluation remains unrun.
+
+### Explore the expeditions
+
+Use the world selector above the board or choose one of the six chapter cards. New puzzles introduce impassable water, walkable bridges, sliding ice, and relics that must all be collected before finishing. The new rules support three crates and four relics. The original three examples and their shared URLs remain compatible.
+
+**3D world / Grid** switches the view without changing the game. Drawing and proposal review use the precise flat grid. The 3D renderer loads on demand, stops rendering after interactions settle, and honors reduced motion. An unavailable WebGL context produces an explicit playable grid fallback.
 
 ## Run locally
 
@@ -110,6 +116,7 @@ flowchart LR
 ```
 
 - `src/core` owns board validation, terrain/occupant rules, editing operations, and examples. It has no React, provider, or database dependencies.
+- `src/components/BoardScene` and `BoardSceneWorld` render decorative Three.js geometry from the same canonical board and game state. They do not implement a second rules engine.
 - `src/solver` searches complete game states and replays every successful path before verification. The browser rejects responses with stale job/revision/content identities.
 - `src/image` prepares photos locally, removes metadata by re-encoding, and requires an explicit interpretation action.
 - `src/state` owns versioned local persistence, HTTP calls, and Worker lifecycle management.
@@ -121,7 +128,7 @@ The game, solver, history, and replay all use the same pure transition function.
 
 Reach the exit on a 4–8 by 4–8 grid. Move with arrows, WASD, or touch controls. Walls and boundaries block movement. Push one crate into a free traversable cell. Keys unlock doors permanently; crates can cover keys but cannot collect them. A successful push is both one move and one push.
 
-Draw with the symbol palette or shortcuts 1–8; Ctrl/Cmd+Z and Shift+Ctrl/Cmd+Z undo and redo. Accepted changes create new revisions and fresh play sessions. Earlier revisions and parked drafts remain in the notebook. Solution playback is separate from your own play history.
+Draw with the symbol palette or shortcuts 1–8; 9 paints water, 0 paints bridges, I paints ice, and R paints relics. Ctrl/Cmd+Z and Shift+Ctrl/Cmd+Z undo and redo. New terrain upgrades drafts to rules version 2. Accepted changes create new revisions and fresh play sessions. Earlier revisions and parked drafts remain in the notebook. Solution playback is separate from your own play history.
 
 Read [the complete edge-case rules](docs/rules.md), [image input details](docs/image-input.md), [evaluation methodology](docs/evaluation.md), [portfolio case study](docs/case-study.md), and [a real regression that was fixed](docs/failure-case.md).
 
@@ -137,4 +144,4 @@ Shortest-move length is a difficulty proxy, not a prediction of human difficulty
 
 ## Credits
 
-The playable interface uses generated photorealistic game pieces and forest scenery, with self-hosted Fraunces and Nunito Sans typography. Original images and exact prompts are preserved in `docs/design`; no borrowed game assets are used. The optional Cloudflare inference adapter is built with Llama; see [third-party notices](THIRD_PARTY_NOTICES.md). Application source is MIT licensed.
+The playable interface uses original Three.js geometry, procedural materials, and generated photorealistic scenery and explorer artwork. Typography is self-hosted Bricolage Grotesque, Nunito Sans, and Fraunces. Original images and exact prompts are preserved in `docs/design`; no borrowed game assets are used. The optional Cloudflare inference adapter is built with Llama; see [third-party notices](THIRD_PARTY_NOTICES.md). Application source is MIT licensed.

@@ -27,6 +27,7 @@ test('a photo-derived puzzle shares through local D1 into a clean context withou
   try {
     const clean = await visitor.newPage();
     await clean.goto(url);
+    await clean.getByRole('button', { name: '2D grid view', exact: true }).click();
     await expect(currentBoard(clean).getByRole('button')).toHaveCount(16);
     await expect(
       clean.getByRole('heading', { name: 'From my sketch', exact: true, level: 1 }),

@@ -8,11 +8,36 @@ export function initialState(board: BoardDefinition): GameState {
     player: board.player,
     crates: [...board.crates].sort((a, b) => a - b),
     hasKey: board.terrain[board.player] === 'key',
+    ...(board.rulesVersion === 2 ? { collectedRelics: relicBit(board, board.player) } : {}),
   };
 }
 
 export function isWon(board: BoardDefinition, state: GameState): boolean {
-  return board.terrain[state.player] === 'exit';
+  return (
+    board.terrain[state.player] === 'exit' &&
+    (board.rulesVersion === 1 ||
+      (state.collectedRelics ?? 0) === (1 << relicCells(board).length) - 1)
+  );
+}
+
+export function relicCells(board: BoardDefinition): number[] {
+  return board.terrain.flatMap((terrain, cell) => (terrain === 'relic' ? [cell] : []));
+}
+
+function relicBit(board: BoardDefinition, cell: number): number {
+  if (board.terrain[cell] !== 'relic') return 0;
+  let index = 0;
+  for (let previous = 0; previous < cell; previous += 1)
+    if (board.terrain[previous] === 'relic') index += 1;
+  return 1 << index;
+}
+
+export function isRelicCollected(board: BoardDefinition, state: GameState, cell: number): boolean {
+  return Boolean((state.collectedRelics ?? 0) & relicBit(board, cell));
+}
+
+export function collectedRelicCount(board: BoardDefinition, state: GameState): number {
+  return relicCells(board).filter((cell) => isRelicCollected(board, state, cell)).length;
 }
 
 function neighbour(board: BoardDefinition, cell: number, direction: Direction): number {
@@ -29,6 +54,7 @@ function obstacle(board: BoardDefinition, cell: number, hasKey: boolean): string
   if (cell < 0 || cell >= board.width * board.height)
     return 'The edge of the board blocks the way.';
   if (board.terrain[cell] === 'wall') return 'A wall blocks the way.';
+  if (board.terrain[cell] === 'water') return 'Deep water blocks the way. Find a bridge.';
   if (board.terrain[cell] === 'door' && !hasKey) return 'Collect the key to unlock this door.';
   return null;
 }
@@ -55,7 +81,23 @@ export function transition(
     crates[crate] = destination;
     crates.sort((a, b) => a - b);
   }
-  const next = { player: target, crates, hasKey: state.hasKey || board.terrain[target] === 'key' };
+  const next: GameState = {
+    player: target,
+    crates,
+    hasKey: state.hasKey || board.terrain[target] === 'key',
+  };
+  if (board.rulesVersion === 2) {
+    next.collectedRelics = (state.collectedRelics ?? 0) | relicBit(board, target);
+    // One input crosses an ice run. Sliding stops at a crate; momentum never auto-pushes it.
+    // Each step stays in the same direction on this finite, non-wrapping grid.
+    while (board.terrain[next.player] === 'ice') {
+      const slideTarget = neighbour(board, next.player, direction);
+      if (obstacle(board, slideTarget, next.hasKey) || crates.includes(slideTarget)) break;
+      next.player = slideTarget;
+      next.hasKey ||= board.terrain[slideTarget] === 'key';
+      next.collectedRelics |= relicBit(board, slideTarget);
+    }
+  }
   return { ok: true, state: next, pushed: crate !== -1, won: isWon(board, next) };
 }
 
